@@ -4,9 +4,41 @@ from threading import Thread
 import queue
 
 
-def invasive_weed():
+def invasive_weed(f, item_list, max_pop_size, iter_max, seed_max, seed_min, n, init_st_dev, final_st_dev):
     # TODO: implement this algorithm
+    # Initialize population
+    init_pop_size = max_pop_size // 10
+
+    min_fit = 0
+    max_fit = 0
+    step = 0
+    while step < iter_max:
+        for i in range(init_pop_size):
+            # seed propagation
+            cur_fit = 0
+            num_seeds = seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min)
+
+        # spatial diffusion distribution
+        st_dev = spatial_distribution(iter_max, step, n, init_st_dev, final_st_dev)
+
+        # selection
+        if init_pop_size == max_pop_size:
+            pass
+
+        step += 1
     return
+
+
+def seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min):
+    term1 = (cur_fit - min_fit) / (max_fit - min_fit)
+    term2 = seed_max - seed_min
+    return seed_max - term1 * term2
+
+
+def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):
+    term1 = ((max_steps - step_num) ** n) / max_steps ** n
+    term2 = (init_st_dev - final_st_dev)
+    return term1 * term2 + final_st_dev
 
 
 def differential_evolution(f, D, pop_size, lower_bound, upper_bound, weight, cross_prob, num_threads):
