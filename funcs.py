@@ -9,6 +9,7 @@ CSCI 633: Biologically-Inspired Intelligent Systems
 Objective functions for the Invasive Weed Optimization with Differential Evolution project.
 """
 
+
 def one_d_bin_packing(x, exp):
     """
     Objective function for the one-dimensional bin packing problem.
@@ -24,7 +25,7 @@ def one_d_bin_packing(x, exp):
     if np.any(np.sum(x, axis=0) != 1):
         return np.inf
     dot_product = np.dot(x, exp.item_weights)
-    # check if each box is within capcaity
+    # check if each box is within capacity
     if np.any(dot_product > exp.capacity):
         return np.inf
     return z

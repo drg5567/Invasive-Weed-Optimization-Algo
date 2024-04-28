@@ -1,39 +1,58 @@
+import math
+
 import numpy as np
 import pandas as pd
 from threading import Thread
 import queue
+from funcs import one_d_bin_packing
 
 
 def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev):
     # Initialize population
     init_pop_size = max_pop_size // 10
-    weeds = np.random.randint(2, size=(init_pop_size, exp.num_items, exp.num_items))
+    weeds = initialize_weeds(init_pop_size, exp)
     fitnesses = []
+    for i in range(init_pop_size):
+        fitnesses.append(one_d_bin_packing(weeds[i], exp))
 
-    min_fit = 0
-    max_fit = 0
+    min_fit = min(fitnesses)
+    max_fit = max(fitnesses)
     step = 0
     while step < exp.iter_max:
-        for i in range(init_pop_size):
+        cur_len = len(weeds)
+        for i in range(cur_len):
             # seed propagation
-            cur_fit = 0
+            cur_fit = fitnesses[i]
             num_seeds = seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min)
+            # spatial diffusion distribution
+            st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
 
-        # spatial diffusion distribution
-        st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
+            for j in range(num_seeds):
+                pass
 
         # selection
-        if init_pop_size == max_pop_size:
+        if len(weeds) == max_pop_size:
             pass
 
         step += 1
     return
 
 
+def initialize_weeds(num_weeds, exp):
+    # prob_zero = .9
+    weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
+    for i in range(num_weeds):
+        for j in range(exp.num_items):
+            box_num = np.random.randint(exp.num_items)
+            weeds[i, box_num, j] = 1
+
+    return weeds
+
+
 def seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min):
-    term1 = (cur_fit - min_fit) / (max_fit - min_fit)
+    term1 = (cur_fit - min_fit) / (max_fit - min_fit) if max_fit != min_fit else 0
     term2 = seed_max - seed_min
-    return seed_max - term1 * term2
+    return math.floor(seed_max - term1 * term2)
 
 
 def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):

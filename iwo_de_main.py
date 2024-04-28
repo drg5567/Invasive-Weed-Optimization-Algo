@@ -49,7 +49,7 @@ class PaperExperiment:
 
 # 5.1) Bin Packing Problem 1
 exp_5_1 = PaperExperiment(30, 30, np.array([
-    6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6, 5, 5, 7, 12
+    6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6, 5, 5, 7, 7, 12
 ]), 500)
 
 # 5.2) Bin Packing Problem 2
@@ -86,19 +86,5 @@ def main():
 
 
 if __name__ == '__main__':
-    x = np.array([[1, 0, 1],
-                  [0, 1, 0],
-                  [0, 0, 0]])
-
-    # Array of weights for each item
-    w = np.array([2, 3, 4])
-
-    # Capacity constraint for each box
-    C = 5
-
-    exp = PaperExperiement(3, 5, w, 1000)
-    fitness = solve(x, exp)
-    print(fitness)
-
-    # main()
+    main()
 
