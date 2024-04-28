@@ -4,25 +4,23 @@ from threading import Thread
 import queue
 
 
-def invasive_weed(f, weight_list, max_pop_size, iter_max, seed_max, seed_min, n, init_st_dev, final_st_dev):
-    # TODO: implement this algorithm
+def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev):
     # Initialize population
     init_pop_size = max_pop_size // 10
-    weeds = []
-    for i in range(init_pop_size):
-        pass
+    weeds = np.random.randint(2, size=(init_pop_size, exp.num_items, exp.num_items))
+    fitnesses = []
 
     min_fit = 0
     max_fit = 0
     step = 0
-    while step < iter_max:
+    while step < exp.iter_max:
         for i in range(init_pop_size):
             # seed propagation
             cur_fit = 0
             num_seeds = seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min)
 
         # spatial diffusion distribution
-        st_dev = spatial_distribution(iter_max, step, n, init_st_dev, final_st_dev)
+        st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
 
         # selection
         if init_pop_size == max_pop_size:
