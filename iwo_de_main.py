@@ -1,6 +1,6 @@
 import numpy as np
-
-from funcs import one_d_bin_packing as solve
+from setup import PaperExperiment, KnapsackExperiment
+from funcs import one_d_bin_packing, knapsack
 
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
@@ -31,30 +31,20 @@ cr = .8                 # crossover rate
 ##############################################################################
 # Set up Problems 1-3 of Bin Packing from the IWO-DE paper
 ##############################################################################
-class PaperExperiement:
-    def __init__(self, num_items, capacity, item_weights, iter_max):
-        # n - number of items
-        self.num_items = num_items
-        # C - fixed capacity of a bin
-        self.capacity = capacity
-        # w_j - weights of items
-        self.item_weights = item_weights
-        # iter_max - maximum number of iterations
-        self.iter_max = iter_max
 
 # 5.1) Bin Packing Problem 1
-exp_5_1 = PaperExperiement(30, 30, np.array([
+exp_5_1 = PaperExperiment(30, 30, np.array([
     6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6, 5, 5, 7, 12
 ]), 500)
 
 # 5.2) Bin Packing Problem 2
-exp_5_2 = PaperExperiement(50, 30, np.array([
+exp_5_2 = PaperExperiment(50, 30, np.array([
     6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6,
     5, 5, 7, 7, 12, 4, 6, 7, 8, 4, 5, 4, 8, 11, 4, 7, 4, 7, 6, 6, 8, 4, 5, 9, 10
 ]), 1000)
 
 # 5.3) Bin Packing Problem 3
-exp_5_3 = PaperExperiement(80, 50, np.array([
+exp_5_3 = PaperExperiment(80, 50, np.array([
     6, 7, 3, 8, 10, 11, 12, 6, 4, 7, 8, 4, 3, 6, 7, 7, 5, 4, 6, 8, 9, 10, 11, 5, 6, 7, 7, 4,
     5, 3, 7, 8, 4, 5, 8, 9, 4, 5, 6, 12, 5, 3, 4, 5, 6, 5, 5, 7, 7, 12, 5, 8, 6, 8, 3, 5, 5,
     6, 6, 8, 3, 5, 6, 8, 9, 11, 12, 5, 6, 7, 5, 6, 8, 4, 5, 9, 10, 11, 4, 5
@@ -79,19 +69,26 @@ def main():
 
 
 if __name__ == '__main__':
-    x = np.array([[1, 0, 1],
-                  [0, 1, 0],
-                  [0, 0, 0]])
+    # x = np.array([[1, 0, 1],
+    #               [0, 1, 0],
+    #               [0, 0, 0]])
+    #
+    # # Array of weights for each item
+    # w = np.array([2, 3, 4])
+    #
+    # # Capacity constraint for each box
+    # C = 5
+    #
+    # exp = PaperExperiment(3, 5, w, 1000)
+    # fitness = solve(x, exp)
+    # print(fitness)
 
-    # Array of weights for each item
     w = np.array([2, 3, 4])
-
-    # Capacity constraint for each box
+    v = np.array([1, 2, 3])
     C = 5
-
-    exp = PaperExperiement(3, 5, w, 1000)
-    fitness = solve(x, exp)
+    x = np.array([0, 0, 1])
+    exp = KnapsackExperiment(3, 5, w, v, 1000)
+    fitness = knapsack(x, exp)
     print(fitness)
-
     # main()
 
