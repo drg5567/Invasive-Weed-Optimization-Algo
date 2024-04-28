@@ -1,6 +1,7 @@
 import numpy as np
 from algorithms import invasive_weed
 
+from funcs import one_d_bin_packing as solve
 
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
@@ -85,4 +86,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    x = np.array([[1, 0, 1],
+                  [0, 1, 0],
+                  [0, 0, 0]])
+
+    # Array of weights for each item
+    w = np.array([2, 3, 4])
+
+    # Capacity constraint for each box
+    C = 5
+
+    exp = PaperExperiement(3, 5, w, 1000)
+    fitness = solve(x, exp)
+    print(fitness)
+
+    # main()
+
