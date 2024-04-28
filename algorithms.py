@@ -4,10 +4,13 @@ from threading import Thread
 import queue
 
 
-def invasive_weed(f, item_list, max_pop_size, iter_max, seed_max, seed_min, n, init_st_dev, final_st_dev):
+def invasive_weed(f, weight_list, max_pop_size, iter_max, seed_max, seed_min, n, init_st_dev, final_st_dev):
     # TODO: implement this algorithm
     # Initialize population
     init_pop_size = max_pop_size // 10
+    weeds = []
+    for i in range(init_pop_size):
+        pass
 
     min_fit = 0
     max_fit = 0
