@@ -6,6 +6,9 @@ import queue
 
 def invasive_weed():
     # TODO: implement this algorithm
+
+
+
     return
 
 
