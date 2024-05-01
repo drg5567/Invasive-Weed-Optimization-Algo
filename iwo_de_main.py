@@ -56,6 +56,7 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 ##############################################################################
 # TODO for our knapsack problem use the papers weights and add a value foreach item
 
+
 def main():
 
     # TODO run the papers experiments
@@ -83,12 +84,12 @@ if __name__ == '__main__':
     # fitness = solve(x, exp)
     # print(fitness)
 
-    w = np.array([2, 3, 4])
-    v = np.array([1, 2, 3])
-    C = 5
-    x = np.array([0, 0, 1])
-    exp = KnapsackExperiment(3, 5, w, v, 1000)
-    fitness = knapsack(x, exp)
-    print(fitness)
-    # main()
+    # w = np.array([2, 3, 4])
+    # v = np.array([1, 2, 3])
+    # C = 5
+    # x = np.array([0, 0, 1])
+    # exp = KnapsackExperiment(3, 5, w, v, 1000)
+    # fitness = knapsack(x, exp)
+    # print(fitness)
+    main()
 
