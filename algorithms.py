@@ -1,5 +1,4 @@
 import math
-
 import numpy as np
 import pandas as pd
 from threading import Thread
@@ -20,19 +19,26 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
     step = 0
     while step < exp.iter_max:
         cur_len = len(weeds)
+        # spatial diffusion distribution
+        st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
         for i in range(cur_len):
             # seed propagation
             cur_fit = fitnesses[i]
             num_seeds = seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min)
-            # spatial diffusion distribution
-            st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
 
             for j in range(num_seeds):
-                pass
+                new_weed = np.random.normal(loc=0, scale=st_dev, size=(exp.num_items, exp.num_items))
+                new_weed_sigmoid = 1 / (1 + np.exp(-new_weed))
+                rand_vals = np.random.uniform(size=(exp.num_items, exp.num_items))
+                offspring = np.where(new_weed_sigmoid >= rand_vals, 1, 0)
+                weeds = np.concatenate((weeds, np.expand_dims(offspring, axis=0)), axis=0)
+                fitnesses.append(one_d_bin_packing(offspring, exp))
 
         # selection
-        if len(weeds) == max_pop_size:
-            pass
+        if len(weeds) > max_pop_size:
+            sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds)
+            fitnesses = sorted_fitnesses[:max_pop_size]
+            weeds = sorted_weeds[:max_pop_size]
 
         step += 1
     return
@@ -49,10 +55,25 @@ def initialize_weeds(num_weeds, exp):
     return weeds
 
 
+def sort_weeds(fitnesses, weeds):
+    sorted_idxs = np.argsort(fitnesses)
+    sorted_fitnesses = [fitnesses[i] for i in sorted_idxs]
+    sorted_weeds = weeds[sorted_idxs]
+    return sorted_weeds, sorted_fitnesses
+
+
 def seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min):
+    if cur_fit == float('inf'):
+        cur_fit = 1000
+    if min_fit == float('inf'):
+        min_fit = 1000
+    if max_fit == float('inf'):
+        max_fit = 1000
+
     term1 = (cur_fit - min_fit) / (max_fit - min_fit) if max_fit != min_fit else 0
     term2 = seed_max - seed_min
-    return math.floor(seed_max - term1 * term2)
+    num_seeds = math.floor(seed_max - term1 * term2)
+    return num_seeds if num_seeds > 0 else 0
 
 
 def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):
