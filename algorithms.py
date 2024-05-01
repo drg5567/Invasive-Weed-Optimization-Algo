@@ -27,10 +27,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             num_seeds = seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min)
 
             for j in range(num_seeds):
-                new_weed = np.random.normal(loc=0, scale=st_dev, size=(exp.num_items, exp.num_items))
-                new_weed_sigmoid = 1 / (1 + np.exp(-new_weed))
-                rand_vals = np.random.uniform(size=(exp.num_items, exp.num_items))
-                offspring = np.where(new_weed_sigmoid >= rand_vals, 1, 0)
+                offspring = make_offspring(weeds, i, st_dev, exp)
                 weeds = np.concatenate((weeds, np.expand_dims(offspring, axis=0)), axis=0)
                 fitnesses.append(one_d_bin_packing(offspring, exp))
 
@@ -39,9 +36,11 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds)
             fitnesses = sorted_fitnesses[:max_pop_size]
             weeds = sorted_weeds[:max_pop_size]
+            min_fit = min(fitnesses)
+            max_fit = max(fitnesses)
 
         step += 1
-    return
+    return min_fit
 
 
 def initialize_weeds(num_weeds, exp):
@@ -53,6 +52,31 @@ def initialize_weeds(num_weeds, exp):
             weeds[i, box_num, j] = 1
 
     return weeds
+
+
+def make_offspring(weeds, idx, st_dev, exp):
+    offspring = weeds[idx].copy()
+    box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
+    box_sigmoid = 1 / (1 + np.exp(-box_dist))
+    rand_vals = np.random.uniform(size=exp.num_items)
+    boxes_in_use = []
+    for k in range(exp.num_items):
+        if rand_vals[k] >= box_sigmoid[k]:
+            offspring[k] = np.zeros(exp.num_items)
+        else:
+            boxes_in_use.append(k)
+
+    for i in range(exp.num_items):
+        if np.all(offspring[:, i] == 0):
+            box_num = -1
+            while box_num == -1:
+                rand_idx = np.random.randint(low=0, high=exp.num_items)
+                if rand_idx in boxes_in_use:
+                    box_num = rand_idx
+
+            offspring[box_num, i] = 1
+
+    return offspring
 
 
 def sort_weeds(fitnesses, weeds):
