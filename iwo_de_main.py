@@ -1,7 +1,8 @@
 import numpy as np
 from algorithms import invasive_weed
-
 from funcs import one_d_bin_packing as solve
+from setup import PaperExperiment, KnapsackExperiment
+from funcs import one_d_bin_packing, knapsack
 
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
@@ -35,7 +36,7 @@ cr = .8                 # crossover rate
 ##############################################################################
 # Set up Problems 1-3 of Bin Packing from the IWO-DE paper
 ##############################################################################
-class PaperExperiment:
+class PaperExperiement:
     def __init__(self, num_items, capacity, item_weights, iter_max):
         # n - number of items
         self.num_items = num_items
@@ -86,5 +87,26 @@ def main():
 
 
 if __name__ == '__main__':
+    # x = np.array([[1, 0, 1],
+    #               [0, 1, 0],
+    #               [0, 0, 0]])
+    #
+    # # Array of weights for each item
+    # w = np.array([2, 3, 4])
+    #
+    # # Capacity constraint for each box
+    # C = 5
+    #
+    # exp = PaperExperiment(3, 5, w, 1000)
+    # fitness = solve(x, exp)
+    # print(fitness)
+
+    # w = np.array([2, 3, 4])
+    # v = np.array([1, 2, 3])
+    # C = 5
+    # x = np.array([0, 0, 1])
+    # exp = KnapsackExperiment(3, 5, w, v, 1000)
+    # fitness = knapsack(x, exp)
+    # print(fitness)
     main()
 
