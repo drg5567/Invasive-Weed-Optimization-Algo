@@ -55,21 +55,27 @@ def initialize_weeds(num_weeds, exp):
 
 
 def make_offspring(weeds, idx, st_dev, exp):
+    # Copy the parent weed
     offspring = weeds[idx].copy()
+    # Generate a normal distribution over the boxes
     box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
+    # Use the sigmoid function to turn the distribution into probabilities
     box_sigmoid = 1 / (1 + np.exp(-box_dist))
     rand_vals = np.random.uniform(size=exp.num_items)
     boxes_in_use = []
     for k in range(exp.num_items):
         if rand_vals[k] >= box_sigmoid[k]:
+            # Don't use this box
             offspring[k] = np.zeros(exp.num_items)
         else:
             boxes_in_use.append(k)
 
+    # Loop over all the items and find ones that aren't currently in a box
     for i in range(exp.num_items):
         if np.all(offspring[:, i] == 0):
             box_num = -1
             while box_num == -1:
+                # Randomly generate an index of a box that is already being used
                 rand_idx = np.random.randint(low=0, high=exp.num_items)
                 if rand_idx in boxes_in_use:
                     box_num = rand_idx

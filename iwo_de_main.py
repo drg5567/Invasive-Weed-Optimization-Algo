@@ -79,7 +79,8 @@ def main():
     for exp in paper_experiments:
         print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
         # TODO run the experiment
-        invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
+        results = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
+        print("Minimum boxes: " + str(results))
 
     # TODO run our experiments
 
