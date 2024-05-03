@@ -16,6 +16,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
 
     min_fit = min(fitnesses)
     max_fit = max(fitnesses)
+    step_of_best_sol = 0
     step = 0
     while step < exp.iter_max:
         cur_len = len(weeds)
@@ -36,15 +37,17 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds)
             fitnesses = sorted_fitnesses[:max_pop_size]
             weeds = sorted_weeds[:max_pop_size]
-            min_fit = min(fitnesses)
+            new_min_fit = min(fitnesses)
+            if new_min_fit < min_fit:
+                step_of_best_sol = step
+            min_fit = new_min_fit
             max_fit = max(fitnesses)
 
         step += 1
-    return min_fit
+    return min_fit, step_of_best_sol
 
 
 def initialize_weeds(num_weeds, exp):
-    # prob_zero = .9
     weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
     for i in range(num_weeds):
         for j in range(exp.num_items):
