@@ -75,11 +75,24 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 
 def main():
 
-    # TODO run the papers experiments
+    # # TODO run the papers experiments
+    # print("Running experiments on base Invasive Weed Optimization:")
+    # for exp in paper_experiments:
+    #     print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
+    #     # TODO run the experiment
+    #     base_iwo = (False, None, None)
+    #     best_solution, num_steps = invasive_weed(exp, max_population, seed_max, seed_min,
+    #                                              n, init_st_dev, final_st_dev, base_iwo)
+    #     print("Minimum boxes: " + str(best_solution))
+    #     print("Number of steps: " + str(num_steps))
+
+    print("\nRunning experiments on Invasive Weed Optimization with Differential Evolution:")
     for exp in paper_experiments:
         print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
         # TODO run the experiment
-        best_solution, num_steps = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
+        de_variant = (True, F, cr)
+        best_solution, num_steps = invasive_weed(exp, max_population, seed_max, seed_min,
+                                                 n, init_st_dev, final_st_dev, de_variant)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
 
