@@ -7,6 +7,7 @@ from funcs import one_d_bin_packing
 
 
 def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev):
+    results = []
     # Initialize population
     init_pop_size = max_pop_size // 10
     weeds = initialize_weeds(init_pop_size, exp)
@@ -42,9 +43,9 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
                 step_of_best_sol = step
             min_fit = new_min_fit
             max_fit = max(fitnesses)
-
+        results.append((step, min_fit))
         step += 1
-    return min_fit, step_of_best_sol
+    return min_fit, step_of_best_sol, results
 
 
 def initialize_weeds(num_weeds, exp):
@@ -246,3 +247,48 @@ def gen_donor_vector(population, index, weight):
 
     donor = xp + weight * (xq - xr)
     return donor
+
+
+def sim_anneal(f, exp, T0, T_f, N):
+    """
+    Simulated Annealing (SA) algorithm for optimization, discretized for our problems
+    :param f: objective function (rosenbrock, ackley, etc.)
+    :param exp: object containing num items, capacity, box weights, etc.
+    :param T0: initial temperature
+    :param T_f: final temperature
+    :param N: number of iterations
+    :return x_hat: best solution found
+    """
+    x0 = initialize_weeds(1, exp)
+    # define the cooling schedule T -> alpha*T (where 0< alpha < 1)
+    T = T0
+    # keep track of the best solution found
+    x_star = x0
+    # time step t (iteration counter)
+    t = 0
+    x_t = x0[0]
+    # results in tuples of (step, min_fit)
+    results = []
+    while T > T_f and t < N:
+        # Apply a discrete move to generate neighbor solution instead of Gaussian
+        x_t1 = make_offspring(np.expand_dims(x_t, axis=0), 0, .0001, exp)
+        # Calculate change in objective function
+        delta_f = f(x_t1, exp) - f(x_t, exp)
+        # Accept the new solution if better
+        if delta_f < 0 or np.exp(-delta_f/T) > np.random.rand():
+            # print("lower f(x) found: ", f(x_t1))
+            x_t = x_t1
+            x_star = x_t1
+        # If not improved
+        else:
+            # Generate a random number r
+            r = np.random.rand()
+            # Accept if p = exp(-delta_f/T) > r (Boltzmann distribution)
+            if np.exp(-delta_f/T) > r:
+                x_t = x_t1
+        # Update the temperature
+        T -= (T0 - T_f) / N
+        # Increment the iteration counter
+        t += 1
+        results.append((t, f(x_star, exp)))
+    return x_star, results

@@ -1,9 +1,9 @@
 import numpy as np
-from algorithms import invasive_weed
+from algorithms import invasive_weed, sim_anneal
 from funcs import one_d_bin_packing as solve
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
-
+from plot_results import plot_binpacking_results
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
 
@@ -72,6 +72,13 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 ##############################################################################
 # TODO for our knapsack problem use the papers weights and add a value foreach item
 
+# simulated annealing hyperparamers #TODO: move somewhere nice and optimize these accordingly
+# num_trials = 30
+# Set the final temperature T_f
+T_f = 1e-10
+# Experiment with different initial temperatures
+init_temps = [100, 50, 10, 5, 1]
+# Experiment with different step-sizes for the random walk
 
 def main():
 
@@ -79,13 +86,30 @@ def main():
     for exp in paper_experiments:
         print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
         # TODO run the experiment
-        best_solution, num_steps = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
+        best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
 
-    # TODO run our experiments
 
-    return
+        ############### Simulated Annealing ################
+        temp = 1 # this temp works pretty good
+        N = exp.iter_max
+        # simulated annealing for given trial
+        print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
+        x_star, sa_res_to_plot = sim_anneal(one_d_bin_packing, exp, temp, T_f, N)
+        # calculate the objective function value at the solution
+        f_star = one_d_bin_packing(x_star, exp)
+        print(f_star)
+        #####################################################
+
+        ################# Firefly Algorithm ################
+        # TODO: FA
+        #####################################################
+
+        ############### Plot Results ################
+        # TODO: add FA to this graph
+        plot_binpacking_results([weed_results_to_plot, sa_res_to_plot])
+        ##############################################
 
 
 if __name__ == '__main__':
