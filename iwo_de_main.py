@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms import invasive_weed, sim_anneal
+from algorithms import invasive_weed, sim_anneal, firefly
 from funcs import one_d_bin_packing as solve
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
@@ -80,16 +80,28 @@ T_f = 1e-10
 init_temps = [100, 50, 10, 5, 1]
 # Experiment with different step-sizes for the random walk
 
+# firefly algorithm hyperparameters #TODO: move somewehere nice and optimize to problems accordingly
+# max iterations for each trial
+N = 100
+pop_size = [5, 10, 15, 25, 50]
+alpha = [0.6, 0.7, 0.8, 0.9]
+beta = 0.7
+# gamma anywhere from [0.001, 1000]
+gamma = [.1, 1, 10, 100, 500]
+
+
+
 def main():
 
     # TODO run the papers experiments
     for exp in paper_experiments:
+
+        ############### Invasive Weed Optimization ################
         print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
-        # TODO run the experiment
         best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
-
+        #####################################################
 
         ############### Simulated Annealing ################
         temp = 1 # this temp works pretty good
@@ -103,12 +115,22 @@ def main():
         #####################################################
 
         ################# Firefly Algorithm ################
-        # TODO: FA
+        a = alpha[0]
+        b = beta
+        g = gamma[1]
+        pop = pop_size[-2]
+        print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
+        x_star_firefly, fa_res_to_plot = firefly(one_d_bin_packing, exp, pop, exp.iter_max, a, b, g, D)
+        f_star_firefly = one_d_bin_packing(x_star_firefly, exp)
+        print(f_star_firefly)
         #####################################################
+
+
 
         ############### Plot Results ################
         # TODO: add FA to this graph
-        plot_binpacking_results([weed_results_to_plot, sa_res_to_plot])
+        # plot_binpacking_results([weed_results_to_plot, sa_res_to_plot, fa_res_to_plot])
+        plot_binpacking_results([fa_res_to_plot])
         ##############################################
 
 
