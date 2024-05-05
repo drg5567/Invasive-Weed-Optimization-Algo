@@ -4,6 +4,7 @@ from funcs import one_d_bin_packing as solve
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
 from plot_results import plot_binpacking_results
+
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
 
@@ -12,7 +13,6 @@ CSCI 633: Biologically-Inspired Intelligent Systems
 
 Final Project, Invasive Weed Optimization with Differential Evolution
 """
-
 
 rand_seed = 1990  # 123 #1234 #69
 np.random.seed(rand_seed)
@@ -90,21 +90,31 @@ beta = 0.7
 gamma = [.1, 1, 10, 100, 500]
 
 
-
 def main():
-
     # TODO run the papers experiments
     for exp in paper_experiments:
-
         ############### Invasive Weed Optimization ################
-        print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity, exp.iter_max))
-        best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n, init_st_dev, final_st_dev)
+        print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity,
+                                                                                        exp.iter_max))
+        print("Running Base Invasive Weed Optimization")
+        base_tuple = (False, None, None)
+        best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
+                                                                       init_st_dev, final_st_dev, base_tuple)
+        print("Minimum boxes: " + str(best_solution))
+        print("Number of steps: " + str(num_steps))
+        #####################################################
+
+        ############### Invasive Weed Optimization with DE ################
+        print("Running Invasive Weed Optimization with Differential Evolution")
+        de_tuple = (True, F, cr)
+        best_solution, num_steps, weed_de_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
+                                                                          init_st_dev, final_st_dev, de_tuple)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
         #####################################################
 
         ############### Simulated Annealing ################
-        temp = 1 # this temp works pretty good
+        temp = 1  # this temp works pretty good
         N = exp.iter_max
         # simulated annealing for given trial
         print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
@@ -125,12 +135,12 @@ def main():
         print(f_star_firefly)
         #####################################################
 
-
-
         ############### Plot Results ################
         # TODO: add FA to this graph
-        # plot_binpacking_results([weed_results_to_plot, sa_res_to_plot, fa_res_to_plot])
-        plot_binpacking_results([fa_res_to_plot])
+        result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO"), (sa_res_to_plot, "SA"),
+                       (fa_res_to_plot, "FA")]
+        plot_binpacking_results(result_list)
+        # plot_binpacking_results([fa_res_to_plot])
         ##############################################
 
 
@@ -157,4 +167,3 @@ if __name__ == '__main__':
     # fitness = knapsack(x, exp)
     # print(fitness)
     main()
-

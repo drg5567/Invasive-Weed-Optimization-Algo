@@ -278,7 +278,7 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
 
                             pop[i, box_num, i] = 1
                     I[i] = f(pop[i], exp)
-                    print(I)
+                    # print(I)
                     # I[i] = f(np.array(pop[i]))
         # Rank fireflies by their light intensity and find current global best g_star
         best = pop[np.argmin(I)]
