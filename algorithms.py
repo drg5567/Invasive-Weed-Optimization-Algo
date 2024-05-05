@@ -1,8 +1,5 @@
 import math
 import numpy as np
-import pandas as pd
-from threading import Thread
-import queue
 from funcs import one_d_bin_packing
 
 
@@ -48,7 +45,8 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             cr = de_tuple[2]
             for w in range(len(weeds)):
                 cur_weed = weeds[w]
-                mutation = gen_weed_donor(weeds, w, F)
+                # mutation = gen_weed_donor(weeds, w, F)
+                mutation = mutate_weed(weeds[w], exp)
                 rand_idx = np.random.randint(exp.num_items)
                 rand_vec = np.random.uniform(size=exp.num_items)
                 crossover_weed = cur_weed.copy()
@@ -157,3 +155,17 @@ def gen_weed_donor(weeds, index, scaling_factor):
 
     donor = r3 + scaling_factor * (r1 - r2)
     return donor
+
+
+def mutate_weed(weed, exp):
+    box_mutations = np.random.randint(1, exp.num_items / 4)
+
+    for i in range(box_mutations):
+        box_idx = np.random.randint(exp.num_items)
+        item_idx = np.random.randint(exp.num_items)
+        cur_bit = weed[box_idx][item_idx]
+        if cur_bit == 1:
+            weed[box_idx][item_idx] = 0
+        else:
+            weed[box_idx][item_idx] = 1
+    return weed
