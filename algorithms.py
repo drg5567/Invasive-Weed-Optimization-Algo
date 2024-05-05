@@ -58,6 +58,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
                 if cross_fit <= cur_fit:
                     weeds[w] = crossover_weed
                     fitnesses[w] = cross_fit
+
             weeds, fitnesses = sort_weeds(fitnesses, weeds)
             new_min_fit = min(fitnesses)
             if new_min_fit < min_fit:
@@ -158,14 +159,10 @@ def gen_weed_donor(weeds, index, scaling_factor):
 
 
 def mutate_weed(weed, exp):
-    box_mutations = np.random.randint(1, exp.num_items / 4)
-
-    for i in range(box_mutations):
-        box_idx = np.random.randint(exp.num_items)
+    num_mutations = np.random.randint(1, exp.num_items / 4)
+    for i in range(num_mutations):
         item_idx = np.random.randint(exp.num_items)
-        cur_bit = weed[box_idx][item_idx]
-        if cur_bit == 1:
-            weed[box_idx][item_idx] = 0
-        else:
-            weed[box_idx][item_idx] = 1
+        weed[:, item_idx] = 0
+        box_idx = np.random.randint(exp.num_items)
+        weed[box_idx][item_idx] = 1
     return weed

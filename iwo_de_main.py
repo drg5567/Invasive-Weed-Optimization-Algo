@@ -30,7 +30,7 @@ final_st_dev = 10
 upper_bound = None      # TODO: replace values in limit
 lower_bound = None
 F = .5                  # differential weight
-cr = .4 #.8                 # crossover rate
+cr = .8                 # crossover rate
 
 
 ##############################################################################
