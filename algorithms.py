@@ -1,11 +1,14 @@
 import math
 import numpy as np
-from funcs import one_d_bin_packing
+
+from setup import PaperExperiment, KnapsackExperiment
+import time
 
 
-def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
+def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
     """
     Performs the invasive weed optimization algorithm on 1-D Bin Packing
+    :param f: function to be optimized
     :param exp: the experiment object containing the original data
     :param max_pop_size: the maximum number of weed agents to generate
     :param seed_max: the maximum number of seeds a weed can produce
@@ -19,16 +22,18 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
     results = []
     # Initialize population
     init_pop_size = max_pop_size // 10
-    weeds = initialize_weeds(init_pop_size, exp)
+    weeds = initialize_pop(init_pop_size, exp)
     fitnesses = []
     for i in range(init_pop_size):
-        fitnesses.append(one_d_bin_packing(weeds[i], exp))
+        fitnesses.append(f(weeds[i], exp))
 
     min_fit = min(fitnesses)
     max_fit = max(fitnesses)
     step_of_best_sol = 0
     step = 0
+    time_per_iter = []
     while step < exp.iter_max:
+        start = time.time()
         cur_len = len(weeds)
         # spatial diffusion distribution
         st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
@@ -40,18 +45,15 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             for j in range(num_seeds):
                 offspring = make_offspring(weeds, i, st_dev, exp)
                 weeds = np.concatenate((weeds, np.expand_dims(offspring, axis=0)), axis=0)
-                fitnesses.append(one_d_bin_packing(offspring, exp))
+                fitnesses.append(f(offspring, exp))
 
         # selection
         if len(weeds) > max_pop_size:
-            sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds)
+            sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds, exp)
             fitnesses = sorted_fitnesses[:max_pop_size]
             weeds = sorted_weeds[:max_pop_size]
-            new_min_fit = min(fitnesses)
-            if new_min_fit < min_fit:
-                step_of_best_sol = step
-            min_fit = new_min_fit
-            max_fit = max(fitnesses)
+            min_fit, max_fit, step_of_best_sol = set_max_and_min(min_fit, max_fit, exp, fitnesses,
+                                                                 step, step_of_best_sol)
 
         # Differential Evolution Variant
         if de_tuple[0]:
@@ -65,84 +67,125 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
                 crossover_weed = cur_weed.copy()
                 for k in range(exp.num_items):
                     if rand_vec[k] <= cr or k == rand_idx:
-                        crossover_weed[:, k] = mutation[:, k]
-                cross_fit = one_d_bin_packing(crossover_weed, exp)
+                        if isinstance(exp, PaperExperiment):
+                            crossover_weed[:, k] = mutation[:, k]
+                        else:
+                            crossover_weed[k] = mutation[k]
+                cross_fit = f(crossover_weed, exp)
                 cur_fit = fitnesses[w]
-                if cross_fit <= cur_fit:
+                if (isinstance(exp, PaperExperiment) and cross_fit <= cur_fit) or (
+                        isinstance(exp, KnapsackExperiment) and cross_fit >= cur_fit):
                     weeds[w] = crossover_weed
                     fitnesses[w] = cross_fit
 
-            # Resort the weeds after the DE steps have been taken
-            weeds, fitnesses = sort_weeds(fitnesses, weeds)
-            new_min_fit = min(fitnesses)
-            if new_min_fit < min_fit:
-                step_of_best_sol = step
-            min_fit = new_min_fit
-            max_fit = max(fitnesses)
+            # Re-sort the weeds after the DE steps have been taken
+            weeds, fitnesses = sort_weeds(fitnesses, weeds, exp)
+            min_fit, max_fit, step_of_best_sol = set_max_and_min(min_fit, max_fit, exp, fitnesses,
+                                                                 step, step_of_best_sol)
 
-        results.append((step, min_fit))
+        if isinstance(exp, PaperExperiment):
+            results.append((step, min_fit))
+        else:
+            results.append((step, max_fit))
         step += 1
-    return min_fit, step_of_best_sol, results
+        end = time.time()
+        time_per_iter.append(end - start)
+    if isinstance(exp, PaperExperiment):
+        best_solution = min_fit
+    else:
+        best_solution = max_fit
+    return best_solution, step_of_best_sol, results, np.mean(time_per_iter)
 
 
-def initialize_weeds(num_weeds, exp):
+def set_max_and_min(min_fit, max_fit, exp, fitnesses, step, step_of_best_sol):
+    if isinstance(exp, PaperExperiment):
+        new_min_fit = min(fitnesses)
+        if new_min_fit < min_fit:
+            step_of_best_sol = step
+        min_fit = new_min_fit
+        max_fit = max(fitnesses)
+    else:
+        new_max_fit = max(fitnesses)
+        if new_max_fit > max_fit:
+            step_of_best_sol = step
+        max_fit = new_max_fit
+        min_fit = min(fitnesses)
+    return min_fit, max_fit, step_of_best_sol
+
+
+def initialize_pop(num_weeds, exp):
     """
-    Creates the initial weed agents
+    Creates the initial agents for either the bin packing
+    or knapsack problem
     :param num_weeds: number of agents to create
     :param exp: the experiment object
     :return: the initial population
     """
-    weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
-    for i in range(num_weeds):
-        for j in range(exp.num_items):
-            box_num = np.random.randint(exp.num_items)
-            weeds[i, box_num, j] = 1
-
+    if isinstance(exp, PaperExperiment):
+        weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
+        for i in range(num_weeds):
+            for j in range(exp.num_items):
+                box_num = np.random.randint(exp.num_items)
+                weeds[i, box_num, j] = 1
+    else:
+        weeds = []
+        for i in range(num_weeds):
+            rand = np.random.uniform(size=exp.num_items)
+            weeds.append(np.where(rand > .5, 1, 0))
     return weeds
 
 
-def gen_valid_sol(exp, s_i, pop_i):
+def gen_valid_sol(exp, sigmoid_i, pop_i):
     offspring = pop_i.copy()
     rand_vals = np.random.uniform(size=exp.num_items)
-    boxes_in_use = []
-    for k in range(exp.num_items):
-        if rand_vals[k] >= s_i[k]:
-            # Don't use this box
-            offspring[k] = np.zeros(exp.num_items)
-        else:
-            boxes_in_use.append(k)
+    if isinstance(exp, PaperExperiment):
+        boxes_in_use = []
+        for k in range(exp.num_items):
+            if rand_vals[k] >= sigmoid_i[k]:
+                # Don't use this box
+                offspring[k] = np.zeros(exp.num_items)
+            else:
+                boxes_in_use.append(k)
 
-    # Loop over all the items and find ones that aren't currently in a box
-    for i in range(exp.num_items):
-        if np.all(offspring[:, i] == 0):
-            box_num = -1
-            while box_num == -1:
-                # Randomly generate an index of a box that is already being used
-                rand_idx = np.random.randint(low=0, high=exp.num_items)
-                if rand_idx in boxes_in_use:
-                    box_num = rand_idx
+        # Loop over all the items and find ones that aren't currently in a box
+        for i in range(exp.num_items):
+            if np.all(offspring[:, i] == 0):
+                box_num = -1
+                while box_num == -1:
+                    # Randomly generate an index of a box that is already being used
+                    rand_idx = np.random.randint(low=0, high=exp.num_items)
+                    if rand_idx in boxes_in_use:
+                        box_num = rand_idx
 
-            offspring[box_num, i] = 1
-
+                offspring[box_num, i] = 1
+    else:
+        for i in range(exp.num_items):
+            if rand_vals[i] >= sigmoid_i[i]:
+                offspring[i] = 0
+            else:
+                offspring[i] = 1
     return offspring
 
 
 def make_offspring(weeds, idx, st_dev, exp):
     # Generate a normal distribution over the boxes
-    box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
+    normal_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
     # Use the sigmoid function to turn the distribution into probabilities
-    box_sigmoid = 1 / (1 + np.exp(-box_dist))
-    return gen_valid_sol(exp, box_sigmoid, weeds[idx])
+    normal_sigmoid = 1 / (1 + np.exp(-normal_dist))
+    return gen_valid_sol(exp, normal_sigmoid, weeds[idx])
 
 
-def sort_weeds(fitnesses, weeds):
+def sort_weeds(fitnesses, weeds, exp):
     """
     Sort the weed population according to their fitness value
     :param fitnesses: the list of fitness values
     :param weeds: the population of weed agents
+    :param exp: the experiment object
     :return: the sorted lists
     """
     sorted_idxs = np.argsort(fitnesses)
+    if isinstance(exp, KnapsackExperiment):
+        sorted_idxs = sorted_idxs[::-1]
     sorted_fitnesses = [fitnesses[i] for i in sorted_idxs]
     sorted_weeds = weeds[sorted_idxs]
     return sorted_weeds, sorted_fitnesses
@@ -202,22 +245,27 @@ def mutate_weed(weeds, cur_idx, exp):
         rand_idx = np.random.randint(len(weeds))
         if rand_idx == cur_idx:
             continue
-        if xp is None:
+        elif xp is None:
             xp = weeds[rand_idx]
-        if xq is None:
+        elif xq is None:
             xq = weeds[rand_idx]
-        if xr is None:
+        elif xr is None:
             xr = weeds[rand_idx]
 
-    p_boxes = np.random.randint(exp.num_items / 2)
-    q_boxes = np.random.randint(exp.num_items / 2)
-    # r_boxes = exp.num_items - p_boxes - q_boxes
+    p_cols = np.random.randint(exp.num_items / 2)
+    q_cols = np.random.randint(exp.num_items / 2)
+    # r_cols = exp.num_items - p_cols - q_cols
 
     mutation = np.zeros(weeds[cur_idx].shape)
 
-    mutation[:, :p_boxes] = xp[:, :p_boxes]
-    mutation[:, p_boxes: p_boxes + q_boxes] = xq[:, p_boxes: p_boxes + q_boxes]
-    mutation[:, p_boxes + q_boxes:] = xr[:, p_boxes + q_boxes:]
+    if isinstance(exp, PaperExperiment):
+        mutation[:, :p_cols] = xp[:, :p_cols]
+        mutation[:, p_cols: p_cols + q_cols] = xq[:, p_cols: p_cols + q_cols]
+        mutation[:, p_cols + q_cols:] = xr[:, p_cols + q_cols:]
+    else:
+        mutation[:p_cols] = xp[:p_cols]
+        mutation[p_cols: p_cols + q_cols] = xq[p_cols:p_cols + q_cols]
+        mutation[p_cols + q_cols:] = xr[p_cols + q_cols:]
     return mutation
 
 
@@ -231,39 +279,47 @@ def sim_anneal(f, exp, T0, T_f, N):
     :param N: number of iterations
     :return x_hat: best solution found
     """
-    x0 = initialize_weeds(1, exp)
+    x0 = initialize_pop(1, exp)
     # define the cooling schedule T -> alpha*T (where 0< alpha < 1)
     T = T0
     # keep track of the best solution found
-    x_star = x0
+    x_star = x0[0]
     # time step t (iteration counter)
     t = 0
     x_t = x0[0]
     # results in tuples of (step, min_fit)
     results = []
+    time_per_iter = []
     while T > T_f and t < N:
+        start = time.time()
         # Apply a discrete move to generate neighbor solution instead of Gaussian
         x_t1 = make_offspring(np.expand_dims(x_t, axis=0), 0, .0001, exp)
         # Calculate change in objective function
         delta_f = f(x_t1, exp) - f(x_t, exp)
-        # Accept the new solution if better
-        if delta_f < 0 or np.exp(-delta_f / T) > np.random.rand():
-            # print("lower f(x) found: ", f(x_t1))
-            x_t = x_t1
-            x_star = x_t1
-        # If not improved
-        else:
-            # Generate a random number r
-            r = np.random.rand()
-            # Accept if p = exp(-delta_f/T) > r (Boltzmann distribution)
-            if np.exp(-delta_f / T) > r:
+        if isinstance(exp, PaperExperiment):
+            if delta_f < 0 or np.exp(-delta_f / T) > np.random.rand():
                 x_t = x_t1
+                x_star = x_t1
+            else:
+                r = np.random.rand()
+                if np.exp(-delta_f / T) > r:
+                    x_t = x_t1
+        else:
+            if delta_f > 0 or np.exp(delta_f / T) > np.random.rand():
+                x_t = x_t1
+                x_star = x_t1
+            else:
+                r = np.random.rand()
+                if np.exp(delta_f / T) > r:
+                    x_t = x_t1
         # Update the temperature
         T -= (T0 - T_f) / N
         # Increment the iteration counter
         t += 1
+        end = time.time()
+        time_per_iter.append(end - start)
         results.append((t, f(x_star, exp)))
-    return x_star, results
+    return x_star, results, np.mean(time_per_iter)
 
 
 def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
@@ -280,15 +336,20 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
     :return best: best solution found
     """
     # Generate an initial population of n fireflies x_i (i = 1, 2, ..., n)
-    pop = initialize_weeds(pop_size, exp)
+    pop = initialize_pop(pop_size, exp)
     # light intensity I_i at x_i is determined by f(x_i)
     I = [f(p, exp) for p in pop]
-    x_star = np.array([pop[np.argmin(I)]])
+    if isinstance(exp, PaperExperiment):
+        x_star = pop[np.argmin(I)]
+    else:
+        x_star = pop[np.argmax(I)]
     # while (t<MaxGeneration)
     t = 0
     # results in tuples of (step, min_fit)
     results = []
+    time_per_iter = []
     while t < max_iter:
+        start = time.time()
         # for i = 1 : n ( all n fireflies )
         for i in range(pop_size):
             # for j = 1 : n ( all n fireflies ) (inner loop)
@@ -304,18 +365,29 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                     # sigmoid function for probability of bit being 1 (according to
                     # Sayadi MK, Ramezanian R, Ghaffari-Nasab N. A discrete firefly meta-heuristic with local
                     # search for makespan minimization in permutation flow shop scheduling problems
-                    s_i = 1 / (1 + np.exp(-x_ij[0, :]))
+                    if isinstance(exp, PaperExperiment):
+                        s_i = 1 / (1 + np.exp(-x_ij[0, :]))
+                    else:
+                        s_i = 1 / (1 + np.exp(-x_ij))
                     pop_i_temp = gen_valid_sol(exp, s_i, pop[i])
 
                     # update light intensity
-                    if f(pop_i_temp, exp) != np.inf:
+                    if (isinstance(exp, PaperExperiment) and f(pop_i_temp, exp) != np.inf) or (
+                            isinstance(exp, KnapsackExperiment) and f(pop_i_temp, exp) != -1):
                         I[i] = f(pop_i_temp, exp)
                         pop[i] = pop_i_temp
 
         # Rank fireflies by their light intensity and find current global best g_star
-        best = pop[np.argmin(I)]
-        if f(best, exp) < f(x_star, exp):
-            x_star = best
-        results.append((t, f(best, exp)))
+        if isinstance(exp, PaperExperiment):
+            best = pop[np.argmin(I)]
+            if f(best, exp) < f(x_star, exp):
+                x_star = best
+        else:
+            best = pop[np.argmax(I)]
+            if f(best, exp) > f(x_star, exp):
+                x_star = best
+        results.append((t, f(x_star, exp)))
         t += 1
-    return x_star, results
+        end = time.time()
+        time_per_iter.append(end - start)
+    return x_star, results, np.mean(time_per_iter)
