@@ -45,7 +45,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             cr = de_tuple[1]
             for w in range(len(weeds)):
                 cur_weed = weeds[w]
-                mutation = mutate_weed(weeds[w], exp)
+                mutation = alt_mutate_weed(weeds, w, exp)
                 rand_idx = np.random.randint(exp.num_items)
                 rand_vec = np.random.uniform(size=exp.num_items)
                 crossover_weed = cur_weed.copy()
@@ -138,14 +138,32 @@ def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):
     return term1 * term2 + final_st_dev
 
 
-def mutate_weed(weed, exp):
-    num_mutations = np.random.randint(1, exp.num_items / 4)
-    for i in range(num_mutations):
-        item_idx = np.random.randint(exp.num_items)
-        weed[:, item_idx] = 0
-        box_idx = np.random.randint(exp.num_items)
-        weed[box_idx][item_idx] = 1
-    return weed
+def alt_mutate_weed(weeds, cur_idx, exp):
+    xp = None
+    xq = None
+    xr = None
+
+    while xp is None or xq is None or xr is None:
+        rand_idx = np.random.randint(len(weeds))
+        if rand_idx == cur_idx:
+            continue
+        if xp is None:
+            xp = weeds[rand_idx]
+        if xq is None:
+            xq = weeds[rand_idx]
+        if xr is None:
+            xr = weeds[rand_idx]
+
+    p_boxes = np.random.randint(exp.num_items / 2)
+    q_boxes = np.random.randint(exp.num_items / 2)
+    # r_boxes = exp.num_items - p_boxes - q_boxes
+
+    mutation = np.zeros(weeds[cur_idx].shape)
+
+    mutation[:, :p_boxes] = xp[:, :p_boxes]
+    mutation[:, p_boxes: p_boxes + q_boxes] = xq[:, p_boxes: p_boxes + q_boxes]
+    mutation[:, p_boxes + q_boxes:] = xr[:, p_boxes + q_boxes:]
+    return mutation
 
 
 def sim_anneal(f, exp, T0, T_f, N):

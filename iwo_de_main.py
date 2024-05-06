@@ -112,33 +112,33 @@ def main():
         #####################################################
 
         ############### Simulated Annealing ################
-        # temp = 1  # this temp works pretty good
-        # N = exp.iter_max
-        # # simulated annealing for given trial
-        # print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
-        # x_star, sa_res_to_plot = sim_anneal(one_d_bin_packing, exp, temp, T_f, N)
-        # # calculate the objective function value at the solution
-        # f_star = one_d_bin_packing(x_star, exp)
-        # print(f_star)
+        temp = 1  # this temp works pretty good
+        N = exp.iter_max
+        # simulated annealing for given trial
+        print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
+        x_star, sa_res_to_plot = sim_anneal(one_d_bin_packing, exp, temp, T_f, N)
+        # calculate the objective function value at the solution
+        f_star = one_d_bin_packing(x_star, exp)
+        print(f_star)
         #####################################################
 
         ################# Firefly Algorithm ################
-        # a = alpha[0]
-        # b = beta
-        # g = gamma[1]
-        # pop = pop_size[-2]
-        # print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
-        # x_star_firefly, fa_res_to_plot = firefly(one_d_bin_packing, exp, pop, exp.iter_max, a, b, g, D)
-        # f_star_firefly = one_d_bin_packing(x_star_firefly, exp)
-        # print(f_star_firefly)
+        a = alpha[0]
+        b = beta
+        g = gamma[1]
+        pop = pop_size[-2]
+        print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
+        x_star_firefly, fa_res_to_plot = firefly(one_d_bin_packing, exp, pop, exp.iter_max, a, b, g, D)
+        f_star_firefly = one_d_bin_packing(x_star_firefly, exp)
+        print(f_star_firefly)
         #####################################################
 
         ############### Plot Results ################
         # TODO: add FA to this graph
-        result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO")]#, (sa_res_to_plot, "SA"),
-                       # (fa_res_to_plot, "FA")]
+        result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO"), (sa_res_to_plot, "SA"),
+                       (fa_res_to_plot, "FA")]
         plot_binpacking_results(result_list)
-        # plot_binpacking_results([fa_res_to_plot])
+        # plot_binpacking_results([(weed_de_results_to_plot, "DE-IWO")])
         ##############################################
 
 
