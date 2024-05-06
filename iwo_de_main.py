@@ -190,11 +190,15 @@ if __name__ == '__main__':
     exp = exp_k_4
     print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity,
                                                                                     exp.iter_max))
-    print("Running Base Invasive Weed Optimization")
-    base_tuple = (False, None)
-    best_solution, num_steps, weed_results_to_plot = invasive_weed(knapsack, exp, max_population, seed_max,
-                                                                   seed_min, n,
-                                                                   init_st_dev, final_st_dev, base_tuple)
-    print("Maximum Profit: " + str(best_solution))
-    print("Number of steps: " + str(num_steps))
+    # test the knapsack problem on the firefly algorithm and SA
+
+    x_star_sa, sa_res_to_plot = sim_anneal(knapsack, exp, 100, T_f, exp.iter_max)
+    x_star_fa, fa_res_to_plot = firefly(knapsack, exp, 50, exp.iter_max, 0.7, 0.7, 1, D)
+
+    print("SA: " + str(knapsack(x_star_sa, exp))
+            + " FA: " + str(knapsack(x_star_fa, exp)))
+
+
+    # print("Maximum Profit: " + str(best_solution))
+    # print("Number of steps: " + str(num_steps))
     # main()

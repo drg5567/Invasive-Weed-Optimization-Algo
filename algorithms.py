@@ -20,7 +20,7 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
     results = []
     # Initialize population
     init_pop_size = max_pop_size // 10
-    weeds = initialize_weeds(init_pop_size, exp)
+    weeds = initialize_pop(init_pop_size, exp)
     fitnesses = []
     for i in range(init_pop_size):
         fitnesses.append(f(weeds[i], exp))
@@ -97,9 +97,10 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
     return best_solution, step_of_best_sol, results
 
 
-def initialize_weeds(num_weeds, exp):
+def initialize_pop(num_weeds, exp):
     """
-    Creates the initial weed agents
+    Creates the initial agents for either the bin packing
+    or knapsack problem
     :param num_weeds: number of agents to create
     :param exp: the experiment object
     :return: the initial population
@@ -257,7 +258,7 @@ def sim_anneal(f, exp, T0, T_f, N):
     :param N: number of iterations
     :return x_hat: best solution found
     """
-    x0 = initialize_weeds(1, exp)
+    x0 = initialize_pop(1, exp)
     # define the cooling schedule T -> alpha*T (where 0< alpha < 1)
     T = T0
     # keep track of the best solution found
@@ -272,18 +273,22 @@ def sim_anneal(f, exp, T0, T_f, N):
         x_t1 = make_offspring(np.expand_dims(x_t, axis=0), 0, .0001, exp)
         # Calculate change in objective function
         delta_f = f(x_t1, exp) - f(x_t, exp)
-        # Accept the new solution if better
-        if delta_f < 0 or np.exp(-delta_f / T) > np.random.rand():
-            # print("lower f(x) found: ", f(x_t1))
-            x_t = x_t1
-            x_star = x_t1
-        # If not improved
-        else:
-            # Generate a random number r
-            r = np.random.rand()
-            # Accept if p = exp(-delta_f/T) > r (Boltzmann distribution)
-            if np.exp(-delta_f / T) > r:
+        if isinstance(exp, PaperExperiment):
+            if delta_f < 0 or np.exp(-delta_f / T) > np.random.rand():
                 x_t = x_t1
+                x_star = x_t1
+            else:
+                r = np.random.rand()
+                if np.exp(-delta_f / T) > r:
+                    x_t = x_t1
+        else:
+            if delta_f > 0 or np.exp(delta_f / T) > np.random.rand():
+                x_t = x_t1
+                x_star = x_t1
+            else:
+                r = np.random.rand()
+                if np.exp(delta_f / T) > r:
+                    x_t = x_t1
         # Update the temperature
         T -= (T0 - T_f) / N
         # Increment the iteration counter
@@ -306,10 +311,13 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
     :return best: best solution found
     """
     # Generate an initial population of n fireflies x_i (i = 1, 2, ..., n)
-    pop = initialize_weeds(pop_size, exp)
+    pop = initialize_pop(pop_size, exp)
     # light intensity I_i at x_i is determined by f(x_i)
     I = [f(p, exp) for p in pop]
-    x_star = np.array([pop[np.argmin(I)]])
+    if isinstance(exp, PaperExperiment):
+        x_star = pop[np.argmin(I)]
+    else:
+        x_star = pop[np.argmax(I)]
     # while (t<MaxGeneration)
     t = 0
     # results in tuples of (step, min_fit)
@@ -330,7 +338,10 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                     # sigmoid function for probability of bit being 1 (according to
                     # Sayadi MK, Ramezanian R, Ghaffari-Nasab N. A discrete firefly meta-heuristic with local
                     # search for makespan minimization in permutation flow shop scheduling problems
-                    s_i = 1 / (1 + np.exp(-x_ij[0, :]))
+                    if isinstance(exp, PaperExperiment):
+                        s_i = 1 / (1 + np.exp(-x_ij[0, :]))
+                    else:
+                        s_i = 1 / (1 + np.exp(-x_ij))
                     pop_i_temp = gen_valid_sol(exp, s_i, pop[i])
 
                     # update light intensity
@@ -339,9 +350,14 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                         pop[i] = pop_i_temp
 
         # Rank fireflies by their light intensity and find current global best g_star
-        best = pop[np.argmin(I)]
-        if f(best, exp) < f(x_star, exp):
-            x_star = best
+        if isinstance(exp, PaperExperiment):
+            best = pop[np.argmin(I)]
+            if f(best, exp) < f(x_star, exp):
+                x_star = best
+        else:
+            best = pop[np.argmax(I)]
+            if f(best, exp) > f(x_star, exp):
+                x_star = best
         results.append((t, f(best, exp)))
         t += 1
     return x_star, results
