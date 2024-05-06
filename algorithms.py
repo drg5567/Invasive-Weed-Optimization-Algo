@@ -4,6 +4,18 @@ from funcs import one_d_bin_packing
 
 
 def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
+    """
+    Performs the invasive weed optimization algorithm on 1-D Bin Packing
+    :param exp: the experiment object containing the original data
+    :param max_pop_size: the maximum number of weed agents to generate
+    :param seed_max: the maximum number of seeds a weed can produce
+    :param seed_min: the minimum number of seeds a weed can produce
+    :param n: the non-linear index
+    :param init_st_dev: the initial value of the standard deviation
+    :param final_st_dev: the final value of the standard deviation
+    :param de_tuple: a tuple that determines if the algorithm is running the differential evolution variant
+    :return: The optimal solution, the number of steps to find the solution, along with data for generating a graph
+    """
     results = []
     # Initialize population
     init_pop_size = max_pop_size // 10
@@ -41,11 +53,13 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             min_fit = new_min_fit
             max_fit = max(fitnesses)
 
+        # Differential Evolution Variant
         if de_tuple[0]:
             cr = de_tuple[1]
             for w in range(len(weeds)):
                 cur_weed = weeds[w]
-                mutation = alt_mutate_weed(weeds, w, exp)
+                mutation = mutate_weed(weeds, w, exp)
+
                 rand_idx = np.random.randint(exp.num_items)
                 rand_vec = np.random.uniform(size=exp.num_items)
                 crossover_weed = cur_weed.copy()
@@ -58,6 +72,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
                     weeds[w] = crossover_weed
                     fitnesses[w] = cross_fit
 
+            # Resort the weeds after the DE steps have been taken
             weeds, fitnesses = sort_weeds(fitnesses, weeds)
             new_min_fit = min(fitnesses)
             if new_min_fit < min_fit:
@@ -71,6 +86,12 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
 
 
 def initialize_weeds(num_weeds, exp):
+    """
+    Creates the initial weed agents
+    :param num_weeds: number of agents to create
+    :param exp: the experiment object
+    :return: the initial population
+    """
     weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
     for i in range(num_weeds):
         for j in range(exp.num_items):
@@ -81,6 +102,14 @@ def initialize_weeds(num_weeds, exp):
 
 
 def make_offspring(weeds, idx, st_dev, exp):
+    """
+    Generates the offspring of the weed agents based on the given standard deviation
+    :param weeds: the population of agents
+    :param idx: the current index of the parent
+    :param st_dev: the current standard deviation
+    :param exp: the experiment object
+    :return: the new offspring generated
+    """
     # Copy the parent weed
     offspring = weeds[idx].copy()
     # Generate a normal distribution over the boxes
@@ -112,6 +141,12 @@ def make_offspring(weeds, idx, st_dev, exp):
 
 
 def sort_weeds(fitnesses, weeds):
+    """
+    Sort the weed population according to their fitness value
+    :param fitnesses: the list of fitness values
+    :param weeds: the population of weed agents
+    :return: the sorted lists
+    """
     sorted_idxs = np.argsort(fitnesses)
     sorted_fitnesses = [fitnesses[i] for i in sorted_idxs]
     sorted_weeds = weeds[sorted_idxs]
@@ -119,6 +154,15 @@ def sort_weeds(fitnesses, weeds):
 
 
 def seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min):
+    """
+    Determines the number of seeds a given weed can produce
+    :param cur_fit: the weed's fitness
+    :param min_fit: the smallest fitness value in the population
+    :param max_fit: the largest fitness value in the population
+    :param seed_max: the maximum number of seeds a weed can produce
+    :param seed_min: the minimum number of seeds a weed can produce
+    :return: the number of seeds the weed can produce
+    """
     if cur_fit == float('inf'):
         cur_fit = 1000
     if min_fit == float('inf'):
@@ -133,12 +177,28 @@ def seed_propagation(cur_fit, min_fit, max_fit, seed_max, seed_min):
 
 
 def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):
+    """
+    Calculates the current standard deviation value for offspring generation based on the current step number
+    :param max_steps: the maximum number of steps the algorithm can go
+    :param step_num: the current step number
+    :param n: the non-linear index
+    :param init_st_dev: the initial standard deviation
+    :param final_st_dev: the final standard deviation
+    :return: the current standard deviation
+    """
     term1 = ((max_steps - step_num) ** n) / max_steps ** n
     term2 = (init_st_dev - final_st_dev)
     return term1 * term2 + final_st_dev
 
 
-def alt_mutate_weed(weeds, cur_idx, exp):
+def mutate_weed(weeds, cur_idx, exp):
+    """
+    Generates a donor matrix to be used in crossover during the differential evolution steps
+    :param weeds: the population of weed agents
+    :param cur_idx: the current index of the weed agent
+    :param exp: the experiment object
+    :return: a new mutated weed based on 3 randomly chosen weed agents
+    """
     xp = None
     xq = None
     xr = None
