@@ -34,16 +34,6 @@ cr = .8                 # crossover rate
 ##############################################################################
 # Set up Problems 1-3 of Bin Packing from the IWO-DE paper
 ##############################################################################
-class PaperExperiement:
-    def __init__(self, num_items, capacity, item_weights, iter_max):
-        # n - number of items
-        self.num_items = num_items
-        # C - fixed capacity of a bin
-        self.capacity = capacity
-        # w_j - weights of items
-        self.item_weights = item_weights
-        # iter_max - maximum number of iterations
-        self.iter_max = iter_max
 
 
 # 5.1) Bin Packing Problem 1
