@@ -1,6 +1,5 @@
 import numpy as np
 from algorithms import invasive_weed, sim_anneal, firefly
-from funcs import one_d_bin_packing as solve
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
 from plot_results import plot_binpacking_results
@@ -30,9 +29,14 @@ init_st_dev = .001
 final_st_dev = 10
 cr = .8  # crossover rate
 
+# simulated annealing hyperparameters
+T_f = 1e-10  # Set the final temperature T_f
 
-# F = .5                  # differential weight
-
+# firefly algorithm hyperparameters
+pop = 5
+alpha = 0.6
+beta = 0.7
+gamma = 1
 
 ##############################################################################
 # Set up Problems 1-3 of Bin Packing from the IWO-DE paper
@@ -61,7 +65,6 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 ##############################################################################
 # Adapt to Knapsack problem for our reproducibility study
 ##############################################################################
-# TODO for our knapsack problem use the papers weights and add a value foreach item
 exp_k_1 = KnapsackExperiment(7, 170, np.array([41, 50, 49, 59, 55, 57, 60]),
                              np.array([442, 525, 511, 593, 546, 564, 617]), 250)
 
@@ -79,23 +82,6 @@ exp_k_3 = KnapsackExperiment(24, 6404180, np.array([
 
 knapsack_experiments = [exp_k_1, exp_k_2, exp_k_3]
 
-# simulated annealing hyperparameters #TODO: move somewhere nice and optimize these accordingly
-# num_trials = 30
-# Set the final temperature T_f
-T_f = 1e-10
-# Experiment with different initial temperatures
-init_temps = [100, 50, 10, 5, 1]
-# Experiment with different step-sizes for the random walk
-
-# firefly algorithm hyperparameters #TODO: move somewhere nice and optimize to problems accordingly
-# max iterations for each trial
-N = 100
-pop_size = [5, 10, 15, 25, 50]
-alpha = [0.6, 0.7, 0.8, 0.9]
-beta = 0.7
-# gamma anywhere from [0.001, 1000]
-gamma = [.1, 1, 10, 100, 500]
-
 
 def main():
     # for experiment_list, f in [(knapsack_experiments, knapsack)]:
@@ -108,8 +94,9 @@ def main():
             base_tuple = (False, None)
             start = time.time()
             best_solution, num_steps, weed_results_to_plot, avg_time = invasive_weed(f, exp, max_population, seed_max,
-                                                                           seed_min, n,
-                                                                           init_st_dev, final_st_dev, base_tuple)
+                                                                                     seed_min, n,
+                                                                                     init_st_dev, final_st_dev,
+                                                                                     base_tuple)
             end = time.time()
             print("Time taken: " + str(end - start))
             print("Average time per iteration: " + str(avg_time))
@@ -122,8 +109,9 @@ def main():
             de_tuple = (True, cr)
             start = time.time()
             best_solution, num_steps, weed_de_results_to_plot, avg_time = invasive_weed(f, exp, max_population,
-                                                                              seed_max, seed_min, n,
-                                                                              init_st_dev, final_st_dev, de_tuple)
+                                                                                        seed_max, seed_min, n,
+                                                                                        init_st_dev, final_st_dev,
+                                                                                        de_tuple)
 
             end = time.time()
             print("Time taken: " + str(end - start))
@@ -137,7 +125,7 @@ def main():
             # simulated annealing for given trial
             print("Running simulated annealing with t_0 {}, N {}".format(temp, exp.iter_max))
             start = time.time()
-            x_star, sa_res_to_plot, avg_time = sim_anneal(f, exp, temp, T_f, N)
+            x_star, sa_res_to_plot, avg_time = sim_anneal(f, exp, temp, T_f, exp.iter_max)
             end = time.time()
             print("Time taken: " + str(end - start))
             print("Average time per iteration: " + str(avg_time))
@@ -147,15 +135,11 @@ def main():
             #####################################################
 
             ################# Firefly Algorithm ################
-            a = alpha[0]
-            b = beta
-            g = gamma[1]
-            pop = pop_size[-2]
-            print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
-            x_star_firefly, fa_res_to_plot = firefly(f, exp, pop, exp.iter_max, a, b, g, D)
+            print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(alpha, beta, gamma, pop))
+            x_star_firefly, fa_res_to_plot = firefly(f, exp, pop, exp.iter_max, alpha, beta, gamma, D)
             f_star_firefly = f(x_star_firefly, exp)
             start = time.time()
-            x_star_firefly, fa_res_to_plot, avg_time = firefly(f, exp, pop, exp.iter_max, a, b, g, D)
+            x_star_firefly, fa_res_to_plot, avg_time = firefly(f, exp, pop, exp.iter_max, alpha, beta, gamma, D)
             end = time.time()
             print("Time taken: " + str(end - start))
             print("Average time per iteration: " + str(avg_time))
