@@ -27,10 +27,8 @@ seed_min = 2
 n = 3                   # non-linear index
 init_st_dev = .001
 final_st_dev = 10
-upper_bound = None      # TODO: replace values in limit
-lower_bound = None
-F = .5                  # differential weight
 cr = .8                 # crossover rate
+# F = .5                  # differential weight
 
 
 ##############################################################################
@@ -97,7 +95,7 @@ def main():
         print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity,
                                                                                         exp.iter_max))
         print("Running Base Invasive Weed Optimization")
-        base_tuple = (False, None, None)
+        base_tuple = (False, None)
         best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
                                                                        init_st_dev, final_st_dev, base_tuple)
         print("Minimum boxes: " + str(best_solution))
@@ -106,7 +104,7 @@ def main():
 
         ############### Invasive Weed Optimization with DE ################
         print("Running Invasive Weed Optimization with Differential Evolution")
-        de_tuple = (True, F, cr)
+        de_tuple = (True, cr)
         best_solution, num_steps, weed_de_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
                                                                           init_st_dev, final_st_dev, de_tuple)
         print("Minimum boxes: " + str(best_solution))
@@ -114,31 +112,31 @@ def main():
         #####################################################
 
         ############### Simulated Annealing ################
-        temp = 1  # this temp works pretty good
-        N = exp.iter_max
-        # simulated annealing for given trial
-        print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
-        x_star, sa_res_to_plot = sim_anneal(one_d_bin_packing, exp, temp, T_f, N)
-        # calculate the objective function value at the solution
-        f_star = one_d_bin_packing(x_star, exp)
-        print(f_star)
+        # temp = 1  # this temp works pretty good
+        # N = exp.iter_max
+        # # simulated annealing for given trial
+        # print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
+        # x_star, sa_res_to_plot = sim_anneal(one_d_bin_packing, exp, temp, T_f, N)
+        # # calculate the objective function value at the solution
+        # f_star = one_d_bin_packing(x_star, exp)
+        # print(f_star)
         #####################################################
 
         ################# Firefly Algorithm ################
-        a = alpha[0]
-        b = beta
-        g = gamma[1]
-        pop = pop_size[-2]
-        print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
-        x_star_firefly, fa_res_to_plot = firefly(one_d_bin_packing, exp, pop, exp.iter_max, a, b, g, D)
-        f_star_firefly = one_d_bin_packing(x_star_firefly, exp)
-        print(f_star_firefly)
+        # a = alpha[0]
+        # b = beta
+        # g = gamma[1]
+        # pop = pop_size[-2]
+        # print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
+        # x_star_firefly, fa_res_to_plot = firefly(one_d_bin_packing, exp, pop, exp.iter_max, a, b, g, D)
+        # f_star_firefly = one_d_bin_packing(x_star_firefly, exp)
+        # print(f_star_firefly)
         #####################################################
 
         ############### Plot Results ################
         # TODO: add FA to this graph
-        result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO"), (sa_res_to_plot, "SA"),
-                       (fa_res_to_plot, "FA")]
+        result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO")]#, (sa_res_to_plot, "SA"),
+                       # (fa_res_to_plot, "FA")]
         plot_binpacking_results(result_list)
         # plot_binpacking_results([fa_res_to_plot])
         ##############################################

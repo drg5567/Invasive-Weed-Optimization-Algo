@@ -1,8 +1,5 @@
 import math
 import numpy as np
-import pandas as pd
-from threading import Thread
-import queue
 from funcs import one_d_bin_packing
 
 
@@ -45,18 +42,16 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             max_fit = max(fitnesses)
 
         if de_tuple[0]:
-            F = de_tuple[1]
-            cr = de_tuple[2]
+            cr = de_tuple[1]
             for w in range(len(weeds)):
                 cur_weed = weeds[w]
-                # mutation = gen_weed_donor(weeds, w, F)
                 mutation = mutate_weed(weeds[w], exp)
                 rand_idx = np.random.randint(exp.num_items)
                 rand_vec = np.random.uniform(size=exp.num_items)
                 crossover_weed = cur_weed.copy()
                 for k in range(exp.num_items):
                     if rand_vec[k] <= cr or k == rand_idx:
-                        crossover_weed[k] = mutation[k]
+                        crossover_weed[:, k] = mutation[:, k]
                 cross_fit = one_d_bin_packing(crossover_weed, exp)
                 cur_fit = fitnesses[w]
                 if cross_fit <= cur_fit:
@@ -141,26 +136,6 @@ def spatial_distribution(max_steps, step_num, n, init_st_dev, final_st_dev):
     term1 = ((max_steps - step_num) ** n) / max_steps ** n
     term2 = (init_st_dev - final_st_dev)
     return term1 * term2 + final_st_dev
-
-
-def gen_weed_donor(weeds, index, scaling_factor):
-    r1 = None
-    r2 = None
-    r3 = None
-
-    while r1 is None or r2 is None or r3 is None:
-        rand_idx = np.random.randint(len(weeds))
-        if rand_idx == index:
-            continue
-        elif r1 is None:
-            r1 = weeds[rand_idx]
-        elif r2 is None:
-            r2 = weeds[rand_idx]
-        elif r3 is None:
-            r3 = weeds[rand_idx]
-
-    donor = r3 + scaling_factor * (r1 - r2)
-    return donor
 
 
 def mutate_weed(weed, exp):
