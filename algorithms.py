@@ -126,6 +126,7 @@ def gen_valid_sol(exp, s_i, pop_i):
 
     return offspring
 
+
 def make_offspring(weeds, idx, st_dev, exp):
     # Generate a normal distribution over the boxes
     box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
@@ -246,7 +247,7 @@ def sim_anneal(f, exp, T0, T_f, N):
         # Calculate change in objective function
         delta_f = f(x_t1, exp) - f(x_t, exp)
         # Accept the new solution if better
-        if delta_f < 0 or np.exp(-delta_f/T) > np.random.rand():
+        if delta_f < 0 or np.exp(-delta_f / T) > np.random.rand():
             # print("lower f(x) found: ", f(x_t1))
             x_t = x_t1
             x_star = x_t1
@@ -255,7 +256,7 @@ def sim_anneal(f, exp, T0, T_f, N):
             # Generate a random number r
             r = np.random.rand()
             # Accept if p = exp(-delta_f/T) > r (Boltzmann distribution)
-            if np.exp(-delta_f/T) > r:
+            if np.exp(-delta_f / T) > r:
                 x_t = x_t1
         # Update the temperature
         T -= (T0 - T_f) / N
@@ -296,14 +297,14 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                 if I[i] > I[j]:
                     # vary attractiveness with distance r vis exp[-gamma*r^2]
                     r = np.linalg.norm(pop[i] - pop[j])
-                    beta_i = beta * np.exp(-gamma * r**2)
+                    beta_i = beta * np.exp(-gamma * r ** 2)
 
                     # Evaluate new solutions and update light intensity
                     x_ij = beta_i * (pop[j] - pop[i]) + alpha * (np.random.rand(exp.num_items) - 0.5)
                     # sigmoid function for probability of bit being 1 (according to
                     # Sayadi MK, Ramezanian R, Ghaffari-Nasab N. A discrete firefly meta-heuristic with local
                     # search for makespan minimization in permutation flow shop scheduling problems
-                    s_i = 1 / (1 + np.exp(-x_ij[0,:]))
+                    s_i = 1 / (1 + np.exp(-x_ij[0, :]))
                     pop_i_temp = gen_valid_sol(exp, s_i, pop[i])
 
                     # update light intensity
