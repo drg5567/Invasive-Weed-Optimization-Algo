@@ -1,11 +1,11 @@
 import math
 import numpy as np
-from funcs import one_d_bin_packing
 
 
-def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
+def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
     """
     Performs the invasive weed optimization algorithm on 1-D Bin Packing
+    :param f: function to be optimized
     :param exp: the experiment object containing the original data
     :param max_pop_size: the maximum number of weed agents to generate
     :param seed_max: the maximum number of seeds a weed can produce
@@ -22,7 +22,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
     weeds = initialize_weeds(init_pop_size, exp)
     fitnesses = []
     for i in range(init_pop_size):
-        fitnesses.append(one_d_bin_packing(weeds[i], exp))
+        fitnesses.append(f(weeds[i], exp))
 
     min_fit = min(fitnesses)
     max_fit = max(fitnesses)
@@ -40,7 +40,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
             for j in range(num_seeds):
                 offspring = make_offspring(weeds, i, st_dev, exp)
                 weeds = np.concatenate((weeds, np.expand_dims(offspring, axis=0)), axis=0)
-                fitnesses.append(one_d_bin_packing(offspring, exp))
+                fitnesses.append(f(offspring, exp))
 
         # selection
         if len(weeds) > max_pop_size:
@@ -66,7 +66,7 @@ def invasive_weed(exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_s
                 for k in range(exp.num_items):
                     if rand_vec[k] <= cr or k == rand_idx:
                         crossover_weed[:, k] = mutation[:, k]
-                cross_fit = one_d_bin_packing(crossover_weed, exp)
+                cross_fit = f(crossover_weed, exp)
                 cur_fit = fitnesses[w]
                 if cross_fit <= cur_fit:
                     weeds[w] = crossover_weed

@@ -7,6 +7,7 @@ class Experiment:
         # iter_max - maximum number of iterations
         self.iter_max = iter_max
 
+
 class PaperExperiment(Experiment):
     def __init__(self, num_items, capacity, item_weights, iter_max):
         super(PaperExperiment, self).__init__(num_items, capacity, iter_max)

@@ -20,14 +20,16 @@ np.random.seed(rand_seed)
 ##############################################################################
 # Set up algorithm hyper-parameters and settings
 ##############################################################################
-D = 30                  # dimensionality of solution space for this problem
+D = 30  # dimensionality of solution space for this problem
 max_population = 50
 seed_max = 5
 seed_min = 2
-n = 3                   # non-linear index
+n = 3  # non-linear index
 init_st_dev = .001
 final_st_dev = 10
-cr = .8                 # crossover rate
+cr = .8  # crossover rate
+
+
 # F = .5                  # differential weight
 
 
@@ -70,7 +72,7 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 ##############################################################################
 # TODO for our knapsack problem use the papers weights and add a value foreach item
 
-# simulated annealing hyperparamers #TODO: move somewhere nice and optimize these accordingly
+# simulated annealing hyperparameters #TODO: move somewhere nice and optimize these accordingly
 # num_trials = 30
 # Set the final temperature T_f
 T_f = 1e-10
@@ -78,7 +80,7 @@ T_f = 1e-10
 init_temps = [100, 50, 10, 5, 1]
 # Experiment with different step-sizes for the random walk
 
-# firefly algorithm hyperparameters #TODO: move somewehere nice and optimize to problems accordingly
+# firefly algorithm hyperparameters #TODO: move somewhere nice and optimize to problems accordingly
 # max iterations for each trial
 N = 100
 pop_size = [5, 10, 15, 25, 50]
@@ -96,7 +98,8 @@ def main():
                                                                                         exp.iter_max))
         print("Running Base Invasive Weed Optimization")
         base_tuple = (False, None)
-        best_solution, num_steps, weed_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
+        best_solution, num_steps, weed_results_to_plot = invasive_weed(one_d_bin_packing, exp, max_population, seed_max,
+                                                                       seed_min, n,
                                                                        init_st_dev, final_st_dev, base_tuple)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
@@ -105,7 +108,8 @@ def main():
         ############### Invasive Weed Optimization with DE ################
         print("Running Invasive Weed Optimization with Differential Evolution")
         de_tuple = (True, cr)
-        best_solution, num_steps, weed_de_results_to_plot = invasive_weed(exp, max_population, seed_max, seed_min, n,
+        best_solution, num_steps, weed_de_results_to_plot = invasive_weed(one_d_bin_packing, exp, max_population,
+                                                                          seed_max, seed_min, n,
                                                                           init_st_dev, final_st_dev, de_tuple)
         print("Minimum boxes: " + str(best_solution))
         print("Number of steps: " + str(num_steps))
