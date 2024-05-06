@@ -58,17 +58,12 @@ def initialize_weeds(num_weeds, exp):
     return weeds
 
 
-def make_offspring(weeds, idx, st_dev, exp):
-    # Copy the parent weed
-    offspring = weeds[idx].copy()
-    # Generate a normal distribution over the boxes
-    box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
-    # Use the sigmoid function to turn the distribution into probabilities
-    box_sigmoid = 1 / (1 + np.exp(-box_dist))
+def gen_valid_sol(exp, s_i, pop_i):
+    offspring = pop_i.copy()
     rand_vals = np.random.uniform(size=exp.num_items)
     boxes_in_use = []
     for k in range(exp.num_items):
-        if rand_vals[k] >= box_sigmoid[k]:
+        if rand_vals[k] >= s_i[k]:
             # Don't use this box
             offspring[k] = np.zeros(exp.num_items)
         else:
@@ -87,6 +82,13 @@ def make_offspring(weeds, idx, st_dev, exp):
             offspring[box_num, i] = 1
 
     return offspring
+
+def make_offspring(weeds, idx, st_dev, exp):
+    # Generate a normal distribution over the boxes
+    box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
+    # Use the sigmoid function to turn the distribution into probabilities
+    box_sigmoid = 1 / (1 + np.exp(-box_dist))
+    return gen_valid_sol(exp, box_sigmoid, weeds[idx])
 
 
 def sort_weeds(fitnesses, weeds):
@@ -298,6 +300,7 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
     """
     Firefly algorithm (FA) for optimization.
     :param f: objective function (fourpeak, eggcrate, etc.)
+    :param exp: object containing num items, capacity, box weights, etc.
     :param pop_size: population size
     :param max_iter: number of iterations
     :param alpha: randomness term
@@ -328,38 +331,21 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
 
                     # Evaluate new solutions and update light intensity
                     x_ij = beta_i * (pop[j] - pop[i]) + alpha * (np.random.rand(exp.num_items) - 0.5)
-                    x_ij = x_ij[0, :]
                     # sigmoid function for probability of bit being 1 (according to
                     # Sayadi MK, Ramezanian R, Ghaffari-Nasab N. A discrete firefly meta-heuristic with local
                     # search for makespan minimization in permutation flow shop scheduling problems
-                    s_i = 1 / (1 + np.exp(-x_ij))
-                    # randomly generate values to determine if bit should be 1 or 0
-                    rand_vals = np.random.uniform(size=exp.num_items)
-                    boxes_in_use = []
-                    for k in range(exp.num_items):
-                        if rand_vals[k] >= s_i[k]:
-                            # Don't use this box
-                            pop[i, k] = np.zeros(exp.num_items)
-                        else:
-                            boxes_in_use.append(k)
-                    # Loop over all the items and find ones that aren't currently in a box
-                    for m in range(exp.num_items):
-                        if np.all(pop[i, :, m] == 0):
-                            box_num = -1
-                            while box_num == -1:
-                                # Randomly generate an index of a box that is already being used
-                                rand_idx = np.random.randint(low=0, high=exp.num_items)
-                                if rand_idx in boxes_in_use:
-                                    box_num = rand_idx
+                    s_i = 1 / (1 + np.exp(-x_ij[0,:]))
+                    pop_i_temp = gen_valid_sol(exp, s_i, pop[i])
 
-                            pop[i, box_num, i] = 1
-                    I[i] = f(pop[i], exp)
-                    print(I)
-                    # I[i] = f(np.array(pop[i]))
+                    # update light intensity
+                    if f(pop_i_temp, exp) != np.inf:
+                        I[i] = f(pop_i_temp, exp)
+                        pop[i] = pop_i_temp
+
         # Rank fireflies by their light intensity and find current global best g_star
         best = pop[np.argmin(I)]
         if f(best, exp) < f(x_star, exp):
             x_star = best
-        results.append((t, f(x_star, exp)))
+        results.append((t, f(best, exp)))
         t += 1
     return x_star, results
