@@ -2,7 +2,7 @@ import numpy as np
 from algorithms import invasive_weed, sim_anneal, firefly
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
-from plot_results import plot_binpacking_results
+from plot_results import plot_results
 import time
 
 """
@@ -84,9 +84,14 @@ knapsack_experiments = [exp_k_1, exp_k_2, exp_k_3]
 
 
 def main():
-    # for experiment_list, f in [(knapsack_experiments, knapsack)]:
-    for experiment_list, f in [(paper_experiments, one_d_bin_packing), (knapsack_experiments, knapsack)]:
-        for exp in experiment_list:
+    for experiment_list, f in [(knapsack_experiments, knapsack)]:
+    # for experiment_list, f in [(paper_experiments, one_d_bin_packing), (knapsack_experiments, knapsack)]:
+        for i in range(len(experiment_list)):
+            exp = experiment_list[i]
+            if f is one_d_bin_packing:
+                problem = "Bin Packing"
+            else:
+                problem = "Knapsack"
             ############### Invasive Weed Optimization ################
             print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity,
                                                                                             exp.iter_max))
@@ -136,11 +141,10 @@ def main():
 
             ################# Firefly Algorithm ################
             print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(alpha, beta, gamma, pop))
-            x_star_firefly, fa_res_to_plot = firefly(f, exp, pop, exp.iter_max, alpha, beta, gamma, D)
-            f_star_firefly = f(x_star_firefly, exp)
             start = time.time()
             x_star_firefly, fa_res_to_plot, avg_time = firefly(f, exp, pop, exp.iter_max, alpha, beta, gamma, D)
             end = time.time()
+            f_star_firefly = f(x_star_firefly, exp)
             print("Time taken: " + str(end - start))
             print("Average time per iteration: " + str(avg_time))
             print(f_star_firefly)
@@ -149,7 +153,7 @@ def main():
             ############### Plot Results ################
             result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO"), (sa_res_to_plot, "SA"),
                            (fa_res_to_plot, "FA")]
-            plot_binpacking_results(result_list)
+            plot_results(result_list, problem, i)
             ##############################################
 
 
