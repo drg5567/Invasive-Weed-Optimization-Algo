@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from setup import PaperExperiment, KnapsackExperiment
 
 
 def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
@@ -44,14 +45,21 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
 
         # selection
         if len(weeds) > max_pop_size:
-            sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds)
+            sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds, exp)
             fitnesses = sorted_fitnesses[:max_pop_size]
             weeds = sorted_weeds[:max_pop_size]
-            new_min_fit = min(fitnesses)
-            if new_min_fit < min_fit:
-                step_of_best_sol = step
-            min_fit = new_min_fit
-            max_fit = max(fitnesses)
+            if isinstance(exp, PaperExperiment):
+                new_min_fit = min(fitnesses)
+                if new_min_fit < min_fit:
+                    step_of_best_sol = step
+                min_fit = new_min_fit
+                max_fit = max(fitnesses)
+            else:
+                new_max_fit = max(fitnesses)
+                if new_max_fit > min_fit:
+                    step_of_best_sol = step
+                max_fit = new_max_fit
+                min_fit = min(fitnesses)
 
         # Differential Evolution Variant
         if de_tuple[0]:
@@ -73,7 +81,7 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
                     fitnesses[w] = cross_fit
 
             # Resort the weeds after the DE steps have been taken
-            weeds, fitnesses = sort_weeds(fitnesses, weeds)
+            weeds, fitnesses = sort_weeds(fitnesses, weeds, exp)
             new_min_fit = min(fitnesses)
             if new_min_fit < min_fit:
                 step_of_best_sol = step
@@ -82,7 +90,11 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
 
         results.append((step, min_fit))
         step += 1
-    return min_fit, step_of_best_sol, results
+    if isinstance(exp, PaperExperiment):
+        best_solution = min_fit
+    else:
+        best_solution = max_fit
+    return best_solution, step_of_best_sol, results
 
 
 def initialize_weeds(num_weeds, exp):
@@ -92,57 +104,71 @@ def initialize_weeds(num_weeds, exp):
     :param exp: the experiment object
     :return: the initial population
     """
-    weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
-    for i in range(num_weeds):
-        for j in range(exp.num_items):
-            box_num = np.random.randint(exp.num_items)
-            weeds[i, box_num, j] = 1
-
+    if isinstance(exp, PaperExperiment):
+        weeds = np.zeros((num_weeds, exp.num_items, exp.num_items))
+        for i in range(num_weeds):
+            for j in range(exp.num_items):
+                box_num = np.random.randint(exp.num_items)
+                weeds[i, box_num, j] = 1
+    else:
+        weeds = []
+        for i in range(num_weeds):
+            rand = np.random.uniform(size=exp.num_items)
+            weeds.append(np.where(rand > .5, 1, 0))
     return weeds
 
 
-def gen_valid_sol(exp, s_i, pop_i):
+def gen_valid_sol(exp, sigmoid_i, pop_i):
     offspring = pop_i.copy()
     rand_vals = np.random.uniform(size=exp.num_items)
-    boxes_in_use = []
-    for k in range(exp.num_items):
-        if rand_vals[k] >= s_i[k]:
-            # Don't use this box
-            offspring[k] = np.zeros(exp.num_items)
-        else:
-            boxes_in_use.append(k)
+    if isinstance(exp, PaperExperiment):
+        boxes_in_use = []
+        for k in range(exp.num_items):
+            if rand_vals[k] >= sigmoid_i[k]:
+                # Don't use this box
+                offspring[k] = np.zeros(exp.num_items)
+            else:
+                boxes_in_use.append(k)
 
-    # Loop over all the items and find ones that aren't currently in a box
-    for i in range(exp.num_items):
-        if np.all(offspring[:, i] == 0):
-            box_num = -1
-            while box_num == -1:
-                # Randomly generate an index of a box that is already being used
-                rand_idx = np.random.randint(low=0, high=exp.num_items)
-                if rand_idx in boxes_in_use:
-                    box_num = rand_idx
+        # Loop over all the items and find ones that aren't currently in a box
+        for i in range(exp.num_items):
+            if np.all(offspring[:, i] == 0):
+                box_num = -1
+                while box_num == -1:
+                    # Randomly generate an index of a box that is already being used
+                    rand_idx = np.random.randint(low=0, high=exp.num_items)
+                    if rand_idx in boxes_in_use:
+                        box_num = rand_idx
 
-            offspring[box_num, i] = 1
-
+                offspring[box_num, i] = 1
+    else:
+        for i in range(exp.num_items):
+            if rand_vals[i] >= sigmoid_i[i]:
+                offspring[i] = 0
+            else:
+                offspring[i] = 1
     return offspring
 
 
 def make_offspring(weeds, idx, st_dev, exp):
     # Generate a normal distribution over the boxes
-    box_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
+    normal_dist = np.random.normal(loc=0, scale=st_dev, size=exp.num_items)
     # Use the sigmoid function to turn the distribution into probabilities
-    box_sigmoid = 1 / (1 + np.exp(-box_dist))
-    return gen_valid_sol(exp, box_sigmoid, weeds[idx])
+    normal_sigmoid = 1 / (1 + np.exp(-normal_dist))
+    return gen_valid_sol(exp, normal_sigmoid, weeds[idx])
 
 
-def sort_weeds(fitnesses, weeds):
+def sort_weeds(fitnesses, weeds, exp):
     """
     Sort the weed population according to their fitness value
     :param fitnesses: the list of fitness values
     :param weeds: the population of weed agents
+    :param exp: the experiment object
     :return: the sorted lists
     """
     sorted_idxs = np.argsort(fitnesses)
+    if isinstance(exp, KnapsackExperiment):
+        sorted_idxs = sorted_idxs[::-1]
     sorted_fitnesses = [fitnesses[i] for i in sorted_idxs]
     sorted_weeds = weeds[sorted_idxs]
     return sorted_weeds, sorted_fitnesses

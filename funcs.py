@@ -44,5 +44,5 @@ def knapsack(x, exp):
     weight = np.dot(x, exp.item_weights)
     # if the weight is over the capacity, return infinity
     if weight > exp.capacity:
-        return np.inf
+        return -1
     return value

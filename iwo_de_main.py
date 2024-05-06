@@ -71,6 +71,24 @@ paper_experiments = [exp_5_1, exp_5_2, exp_5_3]
 # Adapt to Knapsack problem for our reproducibility study
 ##############################################################################
 # TODO for our knapsack problem use the papers weights and add a value foreach item
+# exp_k_1 = KnapsackExperiment(30, 30, np.array([
+#     6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6, 5, 5, 7, 7, 12
+# ]), np.array([]), 500)
+#
+# exp_k_2 = KnapsackExperiment(50, 30, np.array([
+#     6, 3, 4, 6, 8, 7, 4, 7, 7, 5, 5, 6, 7, 7, 6, 4, 8, 7, 8, 8, 2, 3, 4, 5, 6,
+#     5, 5, 7, 7, 12, 4, 6, 7, 8, 4, 5, 4, 8, 11, 4, 7, 4, 7, 6, 6, 8, 4, 5, 9, 10
+# ]), np.array([]), 1000)
+#
+exp_k_3 = KnapsackExperiment(80, 50, np.array([
+    6, 7, 3, 8, 10, 11, 12, 6, 4, 7, 8, 4, 3, 6, 7, 7, 5, 4, 6, 8, 9, 10, 11, 5, 6, 7, 7, 4,
+    5, 3, 7, 8, 4, 5, 8, 9, 4, 5, 6, 12, 5, 3, 4, 5, 6, 5, 5, 7, 7, 12, 5, 8, 6, 8, 3, 5, 5,
+    6, 6, 8, 3, 5, 6, 8, 9, 11, 12, 5, 6, 7, 5, 6, 8, 4, 5, 9, 10, 11, 4, 5
+]), np.array([]), 2000)
+
+exp_k_4 = KnapsackExperiment(15, 750, np.array([
+    70, 73, 77, 80, 82, 87, 90, 94, 98, 106, 110, 113, 115, 118, 120
+]), np.array([135, 139, 149, 150, 156, 163, 173, 184, 192, 201, 210, 214, 221, 229, 240]), 1000)
 
 # simulated annealing hyperparameters #TODO: move somewhere nice and optimize these accordingly
 # num_trials = 30
@@ -165,7 +183,18 @@ if __name__ == '__main__':
     # v = np.array([1, 2, 3])
     # C = 5
     # x = np.array([0, 0, 1])
-    # exp = KnapsackExperiment(3, 5, w, v, 1000)
+    # exp = KnapsackExperiment(3, C, w, v, 1000)
     # fitness = knapsack(x, exp)
     # print(fitness)
-    main()
+
+    exp = exp_k_4
+    print("Running experiment with {} items, capacity {}, and {} iterations".format(exp.num_items, exp.capacity,
+                                                                                    exp.iter_max))
+    print("Running Base Invasive Weed Optimization")
+    base_tuple = (False, None)
+    best_solution, num_steps, weed_results_to_plot = invasive_weed(knapsack, exp, max_population, seed_max,
+                                                                   seed_min, n,
+                                                                   init_st_dev, final_st_dev, base_tuple)
+    print("Maximum Profit: " + str(best_solution))
+    print("Number of steps: " + str(num_steps))
+    # main()
