@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from setup import PaperExperiment, KnapsackExperiment
+import time
 
 
 def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, final_st_dev, de_tuple):
@@ -29,7 +30,9 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
     max_fit = max(fitnesses)
     step_of_best_sol = 0
     step = 0
+    time_per_iter = []
     while step < exp.iter_max:
+        start = time.time()
         cur_len = len(weeds)
         # spatial diffusion distribution
         st_dev = spatial_distribution(exp.iter_max, step, n, init_st_dev, final_st_dev)
@@ -84,11 +87,13 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
         else:
             results.append((step, max_fit))
         step += 1
+        end = time.time()
+        time_per_iter.append(end - start)
     if isinstance(exp, PaperExperiment):
         best_solution = min_fit
     else:
         best_solution = max_fit
-    return best_solution, step_of_best_sol, results
+    return best_solution, step_of_best_sol, results, np.mean(time_per_iter)
 
 
 def set_max_and_min(min_fit, max_fit, exp, fitnesses, step, step_of_best_sol):
@@ -283,7 +288,9 @@ def sim_anneal(f, exp, T0, T_f, N):
     x_t = x0[0]
     # results in tuples of (step, min_fit)
     results = []
+    time_per_iter = []
     while T > T_f and t < N:
+        start = time.time()
         # Apply a discrete move to generate neighbor solution instead of Gaussian
         x_t1 = make_offspring(np.expand_dims(x_t, axis=0), 0, .0001, exp)
         # Calculate change in objective function
@@ -308,8 +315,10 @@ def sim_anneal(f, exp, T0, T_f, N):
         T -= (T0 - T_f) / N
         # Increment the iteration counter
         t += 1
+        end = time.time()
+        time_per_iter.append(end - start)
         results.append((t, f(x_star, exp)))
-    return x_star, results
+    return x_star, results, np.mean(time_per_iter)
 
 
 def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
@@ -337,7 +346,9 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
     t = 0
     # results in tuples of (step, min_fit)
     results = []
+    time_per_iter = []
     while t < max_iter:
+        start = time.time()
         # for i = 1 : n ( all n fireflies )
         for i in range(pop_size):
             # for j = 1 : n ( all n fireflies ) (inner loop)
@@ -375,4 +386,6 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                 x_star = best
         results.append((t, f(best, exp)))
         t += 1
-    return x_star, results
+        end = time.time()
+        time_per_iter.append(end - start)
+    return x_star, results, np.mean(time_per_iter)
