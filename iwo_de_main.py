@@ -4,6 +4,7 @@ from funcs import one_d_bin_packing as solve
 from setup import PaperExperiment, KnapsackExperiment
 from funcs import one_d_bin_packing, knapsack
 from plot_results import plot_binpacking_results
+import time
 
 """
 CSCI 633: Biologically-Inspired Intelligent Systems
@@ -105,9 +106,13 @@ def main():
                                                                                             exp.iter_max))
             print("Running Base Invasive Weed Optimization")
             base_tuple = (False, None)
-            best_solution, num_steps, weed_results_to_plot = invasive_weed(f, exp, max_population, seed_max,
+            start = time.time()
+            best_solution, num_steps, weed_results_to_plot, avg_time = invasive_weed(f, exp, max_population, seed_max,
                                                                            seed_min, n,
                                                                            init_st_dev, final_st_dev, base_tuple)
+            end = time.time()
+            print("Time taken: " + str(end - start))
+            print("Average time per iteration: " + str(avg_time))
             print("Minimum boxes: " + str(best_solution))
             print("Number of steps: " + str(num_steps))
             #####################################################
@@ -115,19 +120,27 @@ def main():
             ############### Invasive Weed Optimization with DE ################
             print("Running Invasive Weed Optimization with Differential Evolution")
             de_tuple = (True, cr)
-            best_solution, num_steps, weed_de_results_to_plot = invasive_weed(f, exp, max_population,
+            start = time.time()
+            best_solution, num_steps, weed_de_results_to_plot, avg_time = invasive_weed(f, exp, max_population,
                                                                               seed_max, seed_min, n,
                                                                               init_st_dev, final_st_dev, de_tuple)
+
+            end = time.time()
+            print("Time taken: " + str(end - start))
+            print("Average time per iteration: " + str(avg_time))
             print("Minimum boxes: " + str(best_solution))
             print("Number of steps: " + str(num_steps))
             #####################################################
 
             ############### Simulated Annealing ################
             temp = 1  # this temp works pretty good
-            N = exp.iter_max
             # simulated annealing for given trial
-            print("Running simulated annealing with t_0 {}, N {}".format(temp, N))
-            x_star, sa_res_to_plot = sim_anneal(f, exp, temp, T_f, N)
+            print("Running simulated annealing with t_0 {}, N {}".format(temp, exp.iter_max))
+            start = time.time()
+            x_star, sa_res_to_plot, avg_time = sim_anneal(f, exp, temp, T_f, N)
+            end = time.time()
+            print("Time taken: " + str(end - start))
+            print("Average time per iteration: " + str(avg_time))
             # calculate the objective function value at the solution
             f_star = f(x_star, exp)
             print(f_star)
@@ -141,15 +154,18 @@ def main():
             print("Running firefly algorithm with alpha {}, beta {}, gamma {} pop {}".format(a, b, g, pop))
             x_star_firefly, fa_res_to_plot = firefly(f, exp, pop, exp.iter_max, a, b, g, D)
             f_star_firefly = f(x_star_firefly, exp)
+            start = time.time()
+            x_star_firefly, fa_res_to_plot, avg_time = firefly(f, exp, pop, exp.iter_max, a, b, g, D)
+            end = time.time()
+            print("Time taken: " + str(end - start))
+            print("Average time per iteration: " + str(avg_time))
             print(f_star_firefly)
             #####################################################
 
             ############### Plot Results ################
-            # TODO: add FA to this graph
             result_list = [(weed_results_to_plot, "IWO"), (weed_de_results_to_plot, "DE-IWO"), (sa_res_to_plot, "SA"),
                            (fa_res_to_plot, "FA")]
             plot_binpacking_results(result_list)
-            # plot_binpacking_results([(weed_de_results_to_plot, "DE-IWO")])
             ##############################################
 
 
