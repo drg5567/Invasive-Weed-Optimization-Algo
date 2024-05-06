@@ -1,5 +1,6 @@
 import math
 import numpy as np
+
 from setup import PaperExperiment, KnapsackExperiment
 
 
@@ -277,7 +278,7 @@ def sim_anneal(f, exp, T0, T_f, N):
     # define the cooling schedule T -> alpha*T (where 0< alpha < 1)
     T = T0
     # keep track of the best solution found
-    x_star = x0
+    x_star = x0[0]
     # time step t (iteration counter)
     t = 0
     x_t = x0[0]
@@ -360,7 +361,8 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
                     pop_i_temp = gen_valid_sol(exp, s_i, pop[i])
 
                     # update light intensity
-                    if f(pop_i_temp, exp) != np.inf:
+                    if (isinstance(exp, PaperExperiment) and f(pop_i_temp, exp) != np.inf) or (
+                            isinstance(exp, KnapsackExperiment) and f(pop_i_temp, exp) != -1):
                         I[i] = f(pop_i_temp, exp)
                         pop[i] = pop_i_temp
 
@@ -373,6 +375,6 @@ def firefly(f, exp, pop_size, max_iter, alpha, beta, gamma, D):
             best = pop[np.argmax(I)]
             if f(best, exp) > f(x_star, exp):
                 x_star = best
-        results.append((t, f(best, exp)))
+        results.append((t, f(x_star, exp)))
         t += 1
     return x_star, results
