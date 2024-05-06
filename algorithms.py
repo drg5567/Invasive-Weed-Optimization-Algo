@@ -1,6 +1,5 @@
 import math
 import numpy as np
-
 from setup import PaperExperiment, KnapsackExperiment
 
 
@@ -75,7 +74,7 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
                     weeds[w] = crossover_weed
                     fitnesses[w] = cross_fit
 
-            # Resort the weeds after the DE steps have been taken
+            # Re-sort the weeds after the DE steps have been taken
             weeds, fitnesses = sort_weeds(fitnesses, weeds, exp)
             min_fit, max_fit, step_of_best_sol = set_max_and_min(min_fit, max_fit, exp, fitnesses,
                                                                  step, step_of_best_sol)
