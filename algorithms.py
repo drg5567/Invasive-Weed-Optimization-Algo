@@ -48,18 +48,8 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
             sorted_weeds, sorted_fitnesses = sort_weeds(fitnesses, weeds, exp)
             fitnesses = sorted_fitnesses[:max_pop_size]
             weeds = sorted_weeds[:max_pop_size]
-            if isinstance(exp, PaperExperiment):
-                new_min_fit = min(fitnesses)
-                if new_min_fit < min_fit:
-                    step_of_best_sol = step
-                min_fit = new_min_fit
-                max_fit = max(fitnesses)
-            else:
-                new_max_fit = max(fitnesses)
-                if new_max_fit > min_fit:
-                    step_of_best_sol = step
-                max_fit = new_max_fit
-                min_fit = min(fitnesses)
+            min_fit, max_fit, step_of_best_sol = set_max_and_min(min_fit, max_fit, exp, fitnesses,
+                                                                 step, step_of_best_sol)
 
         # Differential Evolution Variant
         if de_tuple[0]:
@@ -73,28 +63,48 @@ def invasive_weed(f, exp, max_pop_size, seed_max, seed_min, n, init_st_dev, fina
                 crossover_weed = cur_weed.copy()
                 for k in range(exp.num_items):
                     if rand_vec[k] <= cr or k == rand_idx:
-                        crossover_weed[:, k] = mutation[:, k]
+                        if isinstance(exp, PaperExperiment):
+                            crossover_weed[:, k] = mutation[:, k]
+                        else:
+                            crossover_weed[k] = mutation[k]
                 cross_fit = f(crossover_weed, exp)
                 cur_fit = fitnesses[w]
-                if cross_fit <= cur_fit:
+                if (isinstance(exp, PaperExperiment) and cross_fit <= cur_fit) or (
+                        isinstance(exp, KnapsackExperiment) and cross_fit >= cur_fit):
                     weeds[w] = crossover_weed
                     fitnesses[w] = cross_fit
 
-            # Resort the weeds after the DE steps have been taken
+            # Re-sort the weeds after the DE steps have been taken
             weeds, fitnesses = sort_weeds(fitnesses, weeds, exp)
-            new_min_fit = min(fitnesses)
-            if new_min_fit < min_fit:
-                step_of_best_sol = step
-            min_fit = new_min_fit
-            max_fit = max(fitnesses)
+            min_fit, max_fit, step_of_best_sol = set_max_and_min(min_fit, max_fit, exp, fitnesses,
+                                                                 step, step_of_best_sol)
 
-        results.append((step, min_fit))
+        if isinstance(exp, PaperExperiment):
+            results.append((step, min_fit))
+        else:
+            results.append((step, max_fit))
         step += 1
     if isinstance(exp, PaperExperiment):
         best_solution = min_fit
     else:
         best_solution = max_fit
     return best_solution, step_of_best_sol, results
+
+
+def set_max_and_min(min_fit, max_fit, exp, fitnesses, step, step_of_best_sol):
+    if isinstance(exp, PaperExperiment):
+        new_min_fit = min(fitnesses)
+        if new_min_fit < min_fit:
+            step_of_best_sol = step
+        min_fit = new_min_fit
+        max_fit = max(fitnesses)
+    else:
+        new_max_fit = max(fitnesses)
+        if new_max_fit > max_fit:
+            step_of_best_sol = step
+        max_fit = new_max_fit
+        min_fit = min(fitnesses)
+    return min_fit, max_fit, step_of_best_sol
 
 
 def initialize_pop(num_weeds, exp):
@@ -229,22 +239,27 @@ def mutate_weed(weeds, cur_idx, exp):
         rand_idx = np.random.randint(len(weeds))
         if rand_idx == cur_idx:
             continue
-        if xp is None:
+        elif xp is None:
             xp = weeds[rand_idx]
-        if xq is None:
+        elif xq is None:
             xq = weeds[rand_idx]
-        if xr is None:
+        elif xr is None:
             xr = weeds[rand_idx]
 
-    p_boxes = np.random.randint(exp.num_items / 2)
-    q_boxes = np.random.randint(exp.num_items / 2)
-    # r_boxes = exp.num_items - p_boxes - q_boxes
+    p_cols = np.random.randint(exp.num_items / 2)
+    q_cols = np.random.randint(exp.num_items / 2)
+    # r_cols = exp.num_items - p_cols - q_cols
 
     mutation = np.zeros(weeds[cur_idx].shape)
 
-    mutation[:, :p_boxes] = xp[:, :p_boxes]
-    mutation[:, p_boxes: p_boxes + q_boxes] = xq[:, p_boxes: p_boxes + q_boxes]
-    mutation[:, p_boxes + q_boxes:] = xr[:, p_boxes + q_boxes:]
+    if isinstance(exp, PaperExperiment):
+        mutation[:, :p_cols] = xp[:, :p_cols]
+        mutation[:, p_cols: p_cols + q_cols] = xq[:, p_cols: p_cols + q_cols]
+        mutation[:, p_cols + q_cols:] = xr[:, p_cols + q_cols:]
+    else:
+        mutation[:p_cols] = xp[:p_cols]
+        mutation[p_cols: p_cols + q_cols] = xq[p_cols:p_cols + q_cols]
+        mutation[p_cols + q_cols:] = xr[p_cols + q_cols:]
     return mutation
 
 
