@@ -84,8 +84,8 @@ knapsack_experiments = [exp_k_1, exp_k_2, exp_k_3]
 
 
 def main():
-    for experiment_list, f in [(knapsack_experiments, knapsack)]:
-    # for experiment_list, f in [(paper_experiments, one_d_bin_packing), (knapsack_experiments, knapsack)]:
+    # for experiment_list, f in [(knapsack_experiments, knapsack)]:
+    for experiment_list, f in [(paper_experiments, one_d_bin_packing), (knapsack_experiments, knapsack)]:
         for i in range(len(experiment_list)):
             exp = experiment_list[i]
             if f is one_d_bin_packing:
