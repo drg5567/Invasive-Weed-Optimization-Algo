@@ -1,6 +1,5 @@
-# 633_final_project
-Final Project for Biologically Inspired Intelligent Systems. Project Title: Invasive Weed Optimization with Differential Evolution
-
+# Invasive Weed Optimization with Differential Evolution
+Final Project for CSCI 633: Biologically Inspired Intelligent Systems
 
 ## Team Members
 - Danny Gardner
